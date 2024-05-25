@@ -1,9 +1,9 @@
 
-import { PushStream } from "./../../src/sync/push_stream";
+import { MPSCStream } from "./../../src/sync/mpsc";
 
 test('push stream', async () => {
 
-    const stream = new PushStream<number>();
+    const stream = new MPSCStream<number>();
     const generator = stream.stream;
     const values: number[] = [];
     const promise = (async () => {
@@ -23,7 +23,7 @@ test('push stream', async () => {
 
 test('push stream empty', async () => {
 
-    const stream = new PushStream<number>();
+    const stream = new MPSCStream<number>();
     const generator = stream.stream;
     const values: number[] = [];
     const promise = (async () => {
@@ -40,7 +40,7 @@ test('push stream empty', async () => {
 
 test('push stream restart', async () => {
 
-    const stream = new PushStream<number>();
+    const stream = new MPSCStream<number>();
     const generator = stream.stream;
 
     const promise = generator.next();
