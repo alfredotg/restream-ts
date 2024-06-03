@@ -1,34 +1,56 @@
 import { MPSCStream } from "../sync/mpsc";
-import { IncomingMessage, SubAck, SubError, Subscribe } from "../transport/commands";
+import { CancelableStream } from "../sync/types";
+import { IncomingMessage, SubError, Subscribe } from "../transport/commands";
 import { ITransport } from "../transport/transport";
 
+interface ISubscribeOptions {
+    offset?: number;
+    recoverable?: boolean;
+    immediately?: boolean; // Don't wait for connection to be established
+}
+
 export class Subscriber {
-    public constructor(
-        private readonly transport: ITransport
-    ) {
-    }
+    public constructor(private readonly transport: ITransport) {}
 
-    public subscribe(topic: string, offset?: number): Promise<AsyncGenerator<IncomingMessage | SubError> | SubError> {
-        const stream = new MPSCStream<IncomingMessage | SubError>();
+    public async subscribe(
+        topic: string,
+        options?: ISubscribeOptions,
+    ): Promise<CancelableStream<IncomingMessage | SubError> | SubError> {
+        let subId: number | null = null;
 
-        return new Promise((resolve, reject) => {
-            const cmd : Subscribe = {
-                cmd: 'subscribe',
+        const stream = new MPSCStream<IncomingMessage | SubError>(() => {
+            if (subId !== null) {
+                this.transport.unsubscribe({
+                    cmd: "unsubscribe",
+                    sub_id: subId,
+                });
+                subId = null;
+            }
+        });
+
+        if (!options?.immediately) {
+            await this.transport.waitConnected();
+        }
+
+        return new Promise((resolve) => {
+            const cmd: Subscribe = {
+                cmd: "subscribe",
                 topic: topic,
-                offset,
+                offset: options?.offset,
+                recoverable: options?.recoverable,
                 suback: (result) => {
                     if (result instanceof SubError) {
                         resolve(result);
                     } else {
-                        resolve(stream.stream);
+                        resolve(stream);
                     }
                 },
                 callback: (message) => {
                     stream.push(message);
-                }
+                },
             };
 
-            this.transport.subscribe(cmd);
+            subId = this.transport.subscribe(cmd);
         });
     }
 }

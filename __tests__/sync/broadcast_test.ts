@@ -1,8 +1,6 @@
-
 import { BroadCast } from "./../../src/sync/broadcast";
 
-test('broadcast', async () => {
-
+test("broadcast", async () => {
     const broadcast = new BroadCast<number>();
     const listener1 = broadcast.subscribe();
 
@@ -38,8 +36,7 @@ test('broadcast', async () => {
     expect(values2).toEqual([2, 3]);
 });
 
-test('broadcast cancel', async () => {
-
+test("broadcast cancel", async () => {
     const broadcast = new BroadCast<number>();
     const listener1 = broadcast.subscribe();
 
@@ -48,5 +45,4 @@ test('broadcast cancel', async () => {
     listener1.cancel();
 
     expect(broadcast.broadcast(1)).toBe(0);
-
 });

@@ -1,10 +1,9 @@
-
 export class Notify {
     private resolve: () => void = () => {};
     private promise: Promise<void>;
 
     constructor() {
-        this.promise = new Promise<void>((r) => this.resolve = r);
+        this.promise = new Promise<void>((r) => (this.resolve = r));
     }
 
     public async notified(): Promise<void> {
@@ -13,7 +12,7 @@ export class Notify {
 
     public notify(): void {
         const resolve = this.resolve;
-        this.promise = new Promise<void>((r) => this.resolve = r);
+        this.promise = new Promise<void>((r) => (this.resolve = r));
         resolve();
     }
 }

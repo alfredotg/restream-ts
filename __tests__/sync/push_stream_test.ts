@@ -1,8 +1,6 @@
-
 import { MPSCStream } from "./../../src/sync/mpsc";
 
-test('push stream', async () => {
-
+test("push stream", async () => {
     const stream = new MPSCStream<number>();
     const generator = stream.stream;
     const values: number[] = [];
@@ -21,8 +19,7 @@ test('push stream', async () => {
     expect(values).toEqual([1, 2, 3]);
 });
 
-test('push stream empty', async () => {
-
+test("push stream empty", async () => {
     const stream = new MPSCStream<number>();
     const generator = stream.stream;
     const values: number[] = [];
@@ -38,15 +35,14 @@ test('push stream empty', async () => {
     expect(values).toEqual([]);
 });
 
-test('push stream restart', async () => {
-
+test("push stream restart", async () => {
     const stream = new MPSCStream<number>();
     const generator = stream.stream;
 
     const promise = generator.next();
     stream.push(1);
     let value = await promise;
-    
+
     expect(value.value).toBe(1);
 
     stream.push(2);

@@ -1,153 +1,273 @@
 import mqtt, { IClientPublishOptions, IClientSubscribeOptions } from "mqtt";
 import { Logger, ILogObj } from "tslog";
-import { QoS } from "mqtt-packet";
-import { Subscribe, Unsubscribe, IncomingMessage, CallRpc, CallRpcError, Publish, PubError, SubError } from "./commands";
+import { QoS, UserProperties } from "mqtt-packet";
+import {
+    Subscribe,
+    Unsubscribe,
+    IncomingMessage,
+    CallRpc,
+    CallRpcError,
+    Publish,
+    PubError,
+    SubError,
+} from "./commands";
 import { ConnectionState } from "./connection_state";
-import { CancebleStream } from "../sync/types";
-import { BroadCast } from "../sync/broadcast";
+import { CancelableStream } from "../sync/types";
 import { ITransport } from "./transport";
+import { Watch } from "../sync/watch";
+import { IReconnectStrategy, OnceConnectStrategy } from "./reconnect";
 
 export type MqttWsTransportOptions = {
     url: string;
     token?: string;
     logger?: Logger<ILogObj>;
     debug?: boolean;
+    reconnectStrategy?: IReconnectStrategy;
 };
 
 const RPC_RESPONSE_TOPIC = "$RS/rpc/response";
+const SUB_ID_PROPERTY_NAME = "sub_id";
+const OFFSET_PROPERTY_NAME = "offset";
+const RECOVERABLE_SUB_PROPERTY_NAME = "recoverable";
 
 export class MqttWsTransport implements ITransport {
     private client: mqtt.MqttClient;
-    private subscribtions: Map<number, Subscribe>;
+    private subscriptions: Map<number, Subscribe>;
     private logger?: Logger<ILogObj>;
-    private stateBroadcast: BroadCast<ConnectionState>;
+    private stateBroadcast: Watch<ConnectionState>;
     private rpcId = 0;
     private subId = 0;
-    private rpcCallbacks: Map<number, (response: Buffer | CallRpcError) => void> = new Map();
+    private rpcCallbacks: Map<
+        number,
+        (response: Buffer | CallRpcError) => void
+    > = new Map();
+    private closed = false;
 
     constructor(options: MqttWsTransportOptions) {
         this.logger = options.logger;
-        this.stateBroadcast = new BroadCast();
-        this.subscribtions = new Map();
-        this.client = mqtt.connect(
-            options.url,
-            {
-                protocolVersion: 5,
-                reconnectPeriod: 0,
-                log: this.logger && options.debug ? (...args: any[]) => this.logger?.debug(args) : undefined,
-            },
-        );
-        this.client.on("connect", () => {
-            this.onConnect();
+        this.stateBroadcast = new Watch<ConnectionState>({
+            cmd: "disconnected",
         });
-        this.client.on("disconnect", () => {
-            this.onDisconnect();
+        this.subscriptions = new Map();
+
+        const reconnectStrategy =
+            options.reconnectStrategy || new OnceConnectStrategy();
+
+        this.client = mqtt.connect(options.url, {
+            manualConnect: true,
+            protocolVersion: 5,
+            reconnectPeriod: 0,
+            log:
+                this.logger && options.debug
+                    ? (...args: any[]) => this.logger?.debug(args)
+                    : undefined,
         });
-        this.client.on("message", (receivedTopic, message, packet) => {
-            this.onMessage(receivedTopic, message, packet);
-        });
-        this.client.on("error", (err) => {
-            this.logger?.error(err);
-        });
-        this.logger?.info("Connecting to", options.url);
+
+        reconnectStrategy
+            .run(this.state(), async () => {
+                let resolved = false;
+
+                this.client.removeAllListeners();
+
+                this.client.on("message", (receivedTopic, message, packet) => {
+                    this.onMessage(receivedTopic, message, packet);
+                });
+
+                return await new Promise((resolve, reject) => {
+                    if (this.closed) {
+                        return;
+                    }
+
+                    this.client.once("connect", () => {
+                        this.onConnect();
+
+                        if (!resolved) {
+                            resolved = true;
+                            resolve();
+                        }
+                    });
+
+                    this.client.once("disconnect", () => {
+                        this.onDisconnect();
+
+                        if (!resolved) {
+                            resolved = true;
+                            reject(new Error("Disconnected"));
+                        }
+                    });
+
+                    this.client.on("error", (err) => {
+                        this.logger?.error(err);
+
+                        if (!resolved) {
+                            resolved = true;
+                            reject(err);
+                        }
+                    });
+
+                    this.logger?.info("Connecting to", options.url);
+
+                    this.client.connect();
+                });
+            })
+            .catch((err) => {
+                this.logger?.error(err);
+            });
+    }
+
+    async waitConnected(): Promise<void> {
+        for await (const value of this.state().stream) {
+            if (value.cmd === "connected") {
+                break;
+            }
+        }
     }
 
     publish(command: Publish): void {
         const opts: IClientPublishOptions = {
-            qos: command.callback ? 1 : 0 as QoS,
+            qos: command.callback ? 1 : (0 as QoS),
         };
-        this.client.publish(command.topic, command.message, opts, (trasportError, packet) => {
-            let error: PubError | undefined = undefined;
+        this.client.publish(
+            command.topic,
+            command.message,
+            opts,
+            (transportError, packet) => {
+                let error: PubError | undefined = undefined;
 
-            if (trasportError) {
-                error = new PubError(trasportError);
-            } 
-            
-            if (packet?.cmd == 'puback' && packet.reasonCode !== 0) {
-                if (error === undefined || packet.properties?.reasonString) {
-                    error = new PubError({
-                        reasonCode: packet.reasonCode,
-                        reasonString: packet.properties?.reasonString,
-                    });
+                if (transportError) {
+                    error = new PubError(transportError);
                 }
-            }
 
-            if (error) {
-                this.logger?.error(error);
-            }
+                if (packet?.cmd == "puback" && packet.reasonCode !== 0) {
+                    if (
+                        error === undefined ||
+                        packet.properties?.reasonString
+                    ) {
+                        error = new PubError({
+                            reasonCode: packet.reasonCode,
+                            reasonString: packet.properties?.reasonString,
+                        });
+                    }
+                }
 
-            if (command.callback) {
-                command.callback(error);
+                if (error) {
+                    this.logger?.error(error);
+                }
+
+                if (command.callback) {
+                    command.callback(error);
+                }
+            },
+        );
+    }
+
+    public async close(): Promise<void> {
+        return new Promise((resolve) => {
+            if (this.closed) {
+                return resolve();
             }
+            this.closed = true;
+            this.client.end(() => resolve());
         });
     }
 
-    public close() {
-        this.client.end();
-    }
-
-    public state(): CancebleStream<ConnectionState> {
+    public state(): CancelableStream<ConnectionState> {
         return this.stateBroadcast.subscribe();
     }
 
-    public subscribe(command: Subscribe): void {
+    public sub_count(): number {
+        return this.subscriptions.size;
+    }
+
+    public subscribe(command: Subscribe): number {
         this.subId++;
         const subId = this.subId;
 
-        this.subscribtions.set(subId, command);
- 
-        let options : IClientSubscribeOptions = {
+        this.subscriptions.set(subId, command);
+
+        let options: IClientSubscribeOptions = {
             qos: 1 as QoS,
             properties: {
                 subscriptionIdentifier: subId,
             },
         };
+
+        const userProperties: UserProperties = {};
+
         if (command.offset !== undefined) {
-            const userProperties = {
-                "offset": command.offset.toString()
-            };
+            userProperties[OFFSET_PROPERTY_NAME] = command.offset.toString();
+        }
+
+        if (command.recoverable) {
+            userProperties[RECOVERABLE_SUB_PROPERTY_NAME] = "1";
+        }
+
+        if (Object.keys(userProperties).length > 0) {
             options.properties!.userProperties = userProperties;
         }
 
         this.client.subscribe(command.topic, options, (err, subs) => {
-
             let reason_code: number | undefined = undefined;
             if (subs) {
                 const sub = subs.shift();
                 if (sub && sub.qos & 0x80) {
                     if (!err) {
-                        err = new Error("Failed to subscribe, code: " + sub.qos);
+                        err = new Error(
+                            "Failed to subscribe, code: " + sub.qos,
+                        );
                     }
                     reason_code = sub.qos;
                 }
             }
 
-            const sub = this.subscribtions.get(subId);
+            const sub = this.subscriptions.get(subId);
             if (sub !== command) {
                 return;
             }
 
             if (err) {
                 this.logger?.error("Subscribe error", err);
-                this.subscribtions.delete(subId);
-                this.callback(() => command.suback && command.suback(new SubError(reason_code ? { reason_code } : err)));
+                this.subscriptions.delete(subId);
+                this.callback(
+                    () =>
+                        command.suback &&
+                        command.suback(
+                            new SubError(
+                                reason_code
+                                    ? {
+                                          reason_code,
+                                      }
+                                    : err,
+                            ),
+                        ),
+                );
             } else {
-                this.callback(() => command.suback && command.suback({cmd: "sub_ack"}));
+                this.callback(
+                    () =>
+                        command.suback &&
+                        command.suback({
+                            cmd: "sub_ack",
+                        }),
+                );
             }
         });
+
+        return subId;
     }
 
     public unsubscribe(command: Unsubscribe): void {
-        const sub = this.subscribtions.get(command.sub_id);
+        const sub = this.subscriptions.get(command.sub_id);
         if (sub === undefined) {
             return;
         }
-        this.subscribtions.delete(command.sub_id);
+        this.subscriptions.delete(command.sub_id);
 
         const opts: IClientSubscribeOptions = {
             qos: 0 as QoS,
             properties: {
-                subscriptionIdentifier: command.sub_id,
+                userProperties: {
+                    [SUB_ID_PROPERTY_NAME]: command.sub_id.toString(),
+                },
             },
         };
 
@@ -167,14 +287,19 @@ export class MqttWsTransport implements ITransport {
             properties: {
                 responseTopic: RPC_RESPONSE_TOPIC,
                 correlationData: Buffer.from(rpc_id.toString()),
-            }
+            },
         };
-        this.client.publish("$RS/rpc/" + command.method, command.payload, opts, (err) => {
-            if (err) {
-                this.logger?.error(err);
-                this.onRpcError(rpc_id, err);
-            }
-        });
+        this.client.publish(
+            "$RS/rpc/" + command.method,
+            command.payload,
+            opts,
+            (err) => {
+                if (err) {
+                    this.logger?.error(err);
+                    this.onRpcError(rpc_id, err);
+                }
+            },
+        );
     }
 
     private onRpcError(rpc_id: number, err: Error) {
@@ -186,7 +311,9 @@ export class MqttWsTransport implements ITransport {
     }
 
     private onRpcResponse(body: Buffer, packet: mqtt.IPublishPacket) {
-        const rpc_id = parseInt(packet.properties?.correlationData?.toString() || "");
+        const rpc_id = parseInt(
+            packet.properties?.correlationData?.toString() || "",
+        );
         if (isNaN(rpc_id)) {
             this.logger?.error("Missing rpc id");
             return;
@@ -210,30 +337,58 @@ export class MqttWsTransport implements ITransport {
             } else if (status === "500") {
                 this.logger?.warn("Rpc error", message);
 
-                this.callback(() => callback(new CallRpcError(new Error(message || "Internal server error"))));
+                this.callback(() =>
+                    callback(
+                        new CallRpcError(
+                            new Error(message || "Internal server error"),
+                        ),
+                    ),
+                );
             } else {
                 this.logger?.error("Invalid status", statusHeader);
 
-                this.callback(() => callback(new CallRpcError(new Error("Invalid status"))));
+                this.callback(() =>
+                    callback(new CallRpcError(new Error("Invalid status"))),
+                );
             }
         }
     }
 
     private onConnect() {
-        this.stateBroadcast.broadcast({ cmd: "connected" });
+        this.stateBroadcast.set({ cmd: "connected" });
     }
 
     private onDisconnect() {
-        this.stateBroadcast.broadcast({ cmd: "disconnected" });
+        this.client.removeAllListeners();
 
-        const subscribtions = this.subscribtions;
-        this.subscribtions = new Map();
-        for (const sub of subscribtions.values()) {
-            this.callback(() => sub.callback(new SubError(new Error("Disconnected"))));
+        const subscriptions = this.subscriptions;
+        this.subscriptions = new Map();
+        for (const sub of subscriptions.values()) {
+            this.callback(() =>
+                sub.callback(new SubError(new Error("Disconnected"))),
+            );
+        }
+
+        const rpcCallbacks = this.rpcCallbacks;
+        this.rpcCallbacks = new Map();
+        for (const callback of rpcCallbacks.values()) {
+            this.callback(() =>
+                callback(new CallRpcError(new Error("Disconnected"))),
+            );
+        }
+
+        if (this.closed) {
+            this.stateBroadcast.set({ cmd: "closed" });
+        } else {
+            this.stateBroadcast.set({ cmd: "disconnected" });
         }
     }
 
-    private onMessage(receivedTopic: string, body: Buffer, packet: mqtt.Packet) {
+    private onMessage(
+        receivedTopic: string,
+        body: Buffer,
+        packet: mqtt.Packet,
+    ) {
         if (packet.cmd === "publish") {
             if (receivedTopic === RPC_RESPONSE_TOPIC) {
                 this.onRpcResponse(body, packet);
@@ -243,17 +398,21 @@ export class MqttWsTransport implements ITransport {
         }
     }
 
-    private onSubscriptionMessage(receivedTopic: string, body: Buffer, packet: mqtt.IPublishPacket) {
+    private onSubscriptionMessage(
+        receivedTopic: string,
+        body: Buffer,
+        packet: mqtt.IPublishPacket,
+    ) {
         const maybe_message = parseMessage(receivedTopic, body, packet);
         if (maybe_message instanceof Error) {
             this.logger?.error(maybe_message);
             return;
         }
         const message = maybe_message;
-        const sub = this.subscribtions.get(message.sub_id);
+        const sub = this.subscriptions.get(message.sub_id);
         if (sub !== undefined) {
             if (!this.callback(() => sub.callback(message))) {
-                this.subscribtions.delete(message.sub_id);
+                this.subscriptions.delete(message.sub_id);
             }
         }
     }
@@ -269,7 +428,11 @@ export class MqttWsTransport implements ITransport {
     }
 }
 
-function parseMessage(topic: string, message: Buffer, packet: mqtt.IPublishPacket): IncomingMessage | Error {
+function parseMessage(
+    topic: string,
+    message: Buffer,
+    packet: mqtt.IPublishPacket,
+): IncomingMessage | Error {
     let sub_id = packet.properties?.subscriptionIdentifier;
     if (sub_id && Array.isArray(sub_id)) {
         sub_id = sub_id.shift();

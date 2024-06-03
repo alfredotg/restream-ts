@@ -1,10 +1,13 @@
-
 export type Connected = {
-    cmd: 'connected';
+    cmd: "connected";
 };
 
 export type Disconnected = {
-    cmd: 'disconnected';
+    cmd: "disconnected";
 };
 
-export type ConnectionState = Connected | Disconnected;
+export type Closed = {
+    cmd: "closed";
+};
+
+export type ConnectionState = Connected | Disconnected | Closed;
