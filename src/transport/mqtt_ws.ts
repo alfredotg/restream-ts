@@ -1,4 +1,4 @@
-import mqtt, { IClientPublishOptions, IClientSubscribeOptions } from "mqtt";
+import mqtt, { ErrorWithReasonCode, IClientPublishOptions, IClientSubscribeOptions, ReasonCodes } from "mqtt";
 import { Logger, ILogObj } from "tslog";
 import { QoS, UserProperties } from "mqtt-packet";
 import {
@@ -12,9 +12,9 @@ import {
     SubError,
 } from "./commands";
 import { ConnectionState } from "./connection_state";
-import { CancelableStream } from "../sync/types";
+import { CancelableStream } from "@/sync/types";
 import { ITransport } from "./transport";
-import { Watch } from "../sync/watch";
+import { Watch } from "@/sync/watch";
 import { IReconnectStrategy, OnceConnectStrategy } from "./reconnect";
 
 export type MqttWsTransportOptions = {
@@ -23,12 +23,14 @@ export type MqttWsTransportOptions = {
     logger?: Logger<ILogObj>;
     debug?: boolean;
     reconnectStrategy?: IReconnectStrategy;
+    tokenRefresh?: () => Promise<string>;
 };
 
 const RPC_RESPONSE_TOPIC = "$RS/rpc/response";
 const SUB_ID_PROPERTY_NAME = "sub_id";
 const OFFSET_PROPERTY_NAME = "offset";
 const RECOVERABLE_SUB_PROPERTY_NAME = "recoverable";
+const CONN_ACK_REASON_NOT_AUTHORIZED = 135;
 
 export class MqttWsTransport implements ITransport {
     private client: mqtt.MqttClient;
@@ -42,6 +44,7 @@ export class MqttWsTransport implements ITransport {
         (response: Buffer | CallRpcError) => void
     > = new Map();
     private closed = false;
+    private token: string | null = null;
 
     constructor(options: MqttWsTransportOptions) {
         this.logger = options.logger;
@@ -57,6 +60,12 @@ export class MqttWsTransport implements ITransport {
             manualConnect: true,
             protocolVersion: 5,
             reconnectPeriod: 0,
+            transformWsUrl: (url, options, client) => {
+                if (this.token !== null) {
+                    options.username = this.token;
+                }
+                return url;
+            },
             log:
                 this.logger && options.debug
                     ? (...args: any[]) => this.logger?.debug(args)
@@ -72,6 +81,10 @@ export class MqttWsTransport implements ITransport {
                 this.client.on("message", (receivedTopic, message, packet) => {
                     this.onMessage(receivedTopic, message, packet);
                 });
+
+                if (this.token === null && options.tokenRefresh) {
+                    this.token = await options.tokenRefresh();
+                }
 
                 return await new Promise((resolve, reject) => {
                     if (this.closed) {
@@ -97,6 +110,13 @@ export class MqttWsTransport implements ITransport {
                     });
 
                     this.client.on("error", (err) => {
+
+                        if (err instanceof ErrorWithReasonCode) {
+                            if (err.code == CONN_ACK_REASON_NOT_AUTHORIZED) {
+                                this.token = null;
+                            }
+                        }
+
                         this.logger?.error(err);
 
                         if (!resolved) {
@@ -235,8 +255,8 @@ export class MqttWsTransport implements ITransport {
                             new SubError(
                                 reason_code
                                     ? {
-                                          reason_code,
-                                      }
+                                        reason_code,
+                                    }
                                     : err,
                             ),
                         ),

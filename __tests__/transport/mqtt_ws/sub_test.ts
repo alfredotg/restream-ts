@@ -1,16 +1,13 @@
-import { IncomingMessage, SubError } from "../../src/transport/commands";
-import { MqttWsTransport } from "./../../src/transport/mqtt_ws";
+import { IncomingMessage, SubError } from "../../../src/transport/commands";
+import { MqttWsTransport } from "../../../src/transport/mqtt_ws";
 import { Logger } from "tslog";
-import { JsonRpc } from "../../src/rpc/json_rpc";
-import { EmptyResponse, RpcResponse } from "../../src/rpc/types";
+import { JsonRpc } from "../../../src/rpc/json_rpc";
+import { EmptyResponse, RpcResponse } from "../../../src/rpc/types";
 import assert from "assert";
-import { Publisher } from "../../src/publish/publisher";
-import { Subscriber } from "../../src/subscribe/subscriber";
-import mqtt from "mqtt";
+import { Publisher } from "../../../src/publish/publisher";
+import { Subscriber } from "../../../src/subscribe/subscriber";
 
-function get_server_url(): string {
-    return process.env.MQTT_WS_URL || "ws://127.0.0.1:8083";
-}
+import { create_stream, get_server_url } from "./common";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -29,7 +26,6 @@ test("connect", async () => {
 test("subscribe on closed", async () => {
     const transport = new MqttWsTransport({
         url: get_server_url(),
-        logger: new Logger(),
     });
     let state_stream = transport.state();
     let state = await state_stream.stream.next();
@@ -40,7 +36,7 @@ test("subscribe on closed", async () => {
     transport.close();
 
     state = await state_stream.stream.next();
-    expect(state.value.cmd).toBe("disconnected");
+    expect(state.value.cmd).toBe("closed");
 
     const subscriber = new Subscriber(transport);
     const stream = await subscriber.subscribe("test", {
@@ -52,40 +48,14 @@ test("subscribe on closed", async () => {
 
 describe("Subscriptions", () => {
     let transport: MqttWsTransport | null = null;
-    let stream_name_prefix = "ts_test_stream_";
-    let stream_counter = 0;
     let stream_name: string | null = null;
-    let rpc: JsonRpc | null = null;
 
     beforeEach(() => {
         return (async function () {
             transport = new MqttWsTransport({
-                url: get_server_url(),
-                logger: new Logger(),
+                url: get_server_url()
             });
-            let state_stream = transport.state();
-            await state_stream.stream.next();
-            const state = await state_stream.stream.next();
-            expect(state.value.cmd).toBe("connected");
-
-            stream_name = stream_name_prefix + stream_counter.toString();
-            stream_counter++;
-
-            rpc = new JsonRpc(transport);
-
-            let response = await rpc.call<RpcResponse<EmptyResponse>>(
-                "streams/delete",
-                { name: stream_name },
-            );
-            expect("ok" in response).toBe(true);
-
-            response = await rpc.call<RpcResponse<EmptyResponse>>(
-                "streams/create",
-                {
-                    name: stream_name,
-                },
-            );
-            expect("ok" in response).toBe(true);
+            stream_name = await create_stream(transport);
         })();
     });
 

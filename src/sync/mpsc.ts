@@ -1,8 +1,9 @@
 import { CancelableStream } from "./types";
 import { Notify } from "./notify";
+import Denque from "denque";
 
 export class MPSCStream<T> implements CancelableStream<T> {
-    private events: T[] = [];
+    private events: Denque<T> = new Denque<T>();
     private notify: Notify | null = null;
     private on_cancel?: () => void;
 
@@ -15,7 +16,6 @@ export class MPSCStream<T> implements CancelableStream<T> {
         this.stream = (async function* (self: MPSCStream<T>) {
             try {
                 while (self.notify !== null || self.events.length > 0) {
-                    let notified = self.notify?.notified();
                     while (true) {
                         let value = self.events.shift();
                         if (value === undefined) {
@@ -23,6 +23,7 @@ export class MPSCStream<T> implements CancelableStream<T> {
                         }
                         yield value;
                     }
+                    const notified = self.notify?.notified();
                     if (notified !== null) {
                         await notified;
                     }
@@ -34,7 +35,7 @@ export class MPSCStream<T> implements CancelableStream<T> {
     }
 
     public clear(): void {
-        this.events = [];
+        this.events.clear();
     }
 
     public push(value: T): boolean {
