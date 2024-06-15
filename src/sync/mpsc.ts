@@ -17,7 +17,7 @@ export class MPSCStream<T> implements CancelableStream<T> {
             try {
                 while (self.notify !== null || self.events.length > 0) {
                     while (true) {
-                        let value = self.events.shift();
+                        const value = self.events.shift();
                         if (value === undefined) {
                             break;
                         }

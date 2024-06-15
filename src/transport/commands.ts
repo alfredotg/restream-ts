@@ -1,3 +1,5 @@
+import { CreateSubscriptionErrorReason } from "@/api";
+
 export type Subscribe = {
     cmd: "subscribe";
     topic: string;
@@ -28,9 +30,12 @@ export class SubError {
     public constructor(public error: SubErrorResponse | Error) {}
 }
 
-export type SubErrorResponse = {
-    reason_code: number;
-};
+export class SubErrorResponse {
+    public constructor(
+        public reason_code: CreateSubscriptionErrorReason,
+        public message: string,
+    ) {}
+}
 
 export type Publish = {
     cmd: "publish";

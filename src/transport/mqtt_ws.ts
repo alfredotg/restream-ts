@@ -1,4 +1,8 @@
-import mqtt, { ErrorWithReasonCode, IClientPublishOptions, IClientSubscribeOptions, ReasonCodes } from "mqtt";
+import mqtt, {
+    ErrorWithReasonCode,
+    IClientPublishOptions,
+    IClientSubscribeOptions,
+} from "mqtt";
 import { Logger, ILogObj } from "tslog";
 import { QoS, UserProperties } from "mqtt-packet";
 import {
@@ -10,12 +14,17 @@ import {
     Publish,
     PubError,
     SubError,
+    SubErrorResponse,
 } from "./commands";
 import { ConnectionState } from "./connection_state";
 import { CancelableStream } from "@/sync/types";
 import { ITransport } from "./transport";
 import { Watch } from "@/sync/watch";
 import { IReconnectStrategy, OnceConnectStrategy } from "./reconnect";
+import {
+    CreateSubscriptionErrorReasonFromJSON,
+    instanceOfCreateSubscriptionErrorReason,
+} from "@/api";
 
 export type MqttWsTransportOptions = {
     url: string;
@@ -45,6 +54,7 @@ export class MqttWsTransport implements ITransport {
     > = new Map();
     private closed = false;
     private token: string | null = null;
+    private subErrorReasons: Map<number, SubErrorResponse> = new Map();
 
     constructor(options: MqttWsTransportOptions) {
         this.logger = options.logger;
@@ -60,7 +70,7 @@ export class MqttWsTransport implements ITransport {
             manualConnect: true,
             protocolVersion: 5,
             reconnectPeriod: 0,
-            transformWsUrl: (url, options, client) => {
+            transformWsUrl: (url, options) => {
                 if (this.token !== null) {
                     options.username = this.token;
                 }
@@ -68,7 +78,7 @@ export class MqttWsTransport implements ITransport {
             },
             log:
                 this.logger && options.debug
-                    ? (...args: any[]) => this.logger?.debug(args)
+                    ? (...args: any[]) => this.logger?.debug(args) // eslint-disable-line @typescript-eslint/no-explicit-any
                     : undefined,
         });
 
@@ -77,9 +87,39 @@ export class MqttWsTransport implements ITransport {
                 let resolved = false;
 
                 this.client.removeAllListeners();
+                this.subErrorReasons = new Map();
 
                 this.client.on("message", (receivedTopic, message, packet) => {
                     this.onMessage(receivedTopic, message, packet);
+                });
+
+                this.client.on("packetreceive", (packet) => {
+                    if (
+                        packet.cmd === "suback" &&
+                        packet.granted.length !== 0 &&
+                        packet.granted[0] !== 0
+                    ) {
+                        let subIdProperty =
+                            packet.properties?.userProperties?.sub_id;
+                        if (Array.isArray(subIdProperty)) {
+                            subIdProperty = subIdProperty.shift();
+                        }
+                        if (!subIdProperty) {
+                            return;
+                        }
+                        const subId = parseInt(subIdProperty, 10);
+                        const reason = parseReasonString(
+                            packet.properties?.reasonString || "",
+                        );
+                        if (reason) {
+                            this.subErrorReasons.set(subId, reason);
+                        } else {
+                            this.logger?.error(
+                                "Failed to parse reason string",
+                                packet.properties?.reasonString,
+                            );
+                        }
+                    }
                 });
 
                 if (this.token === null && options.tokenRefresh) {
@@ -110,7 +150,6 @@ export class MqttWsTransport implements ITransport {
                     });
 
                     this.client.on("error", (err) => {
-
                         if (err instanceof ErrorWithReasonCode) {
                             if (err.code == CONN_ACK_REASON_NOT_AUTHORIZED) {
                                 this.token = null;
@@ -205,7 +244,7 @@ export class MqttWsTransport implements ITransport {
 
         this.subscriptions.set(subId, command);
 
-        let options: IClientSubscribeOptions = {
+        const options: IClientSubscribeOptions = {
             qos: 1 as QoS,
             properties: {
                 subscriptionIdentifier: subId,
@@ -227,7 +266,9 @@ export class MqttWsTransport implements ITransport {
         }
 
         this.client.subscribe(command.topic, options, (err, subs) => {
-            let reason_code: number | undefined = undefined;
+            const reasonResponse = this.subErrorReasons.get(subId);
+            this.subErrorReasons.delete(subId);
+
             if (subs) {
                 const sub = subs.shift();
                 if (sub && sub.qos & 0x80) {
@@ -236,7 +277,6 @@ export class MqttWsTransport implements ITransport {
                             "Failed to subscribe, code: " + sub.qos,
                         );
                     }
-                    reason_code = sub.qos;
                 }
             }
 
@@ -246,20 +286,13 @@ export class MqttWsTransport implements ITransport {
             }
 
             if (err) {
-                this.logger?.error("Subscribe error", err);
+                this.logger?.error("Subscribe error", err, reasonResponse);
                 this.subscriptions.delete(subId);
+
                 this.callback(
                     () =>
                         command.suback &&
-                        command.suback(
-                            new SubError(
-                                reason_code
-                                    ? {
-                                        reason_code,
-                                    }
-                                    : err,
-                            ),
-                        ),
+                        command.suback(new SubError(reasonResponse || err)),
                 );
             } else {
                 this.callback(
@@ -477,4 +510,19 @@ function parseMessage(
         offset,
         message,
     };
+}
+
+function parseReasonString(reasonString: string): SubErrorResponse | null {
+    const parts = reasonString.split(" ");
+    const code = parts.shift();
+    const message = parts.join(" ");
+
+    if (instanceOfCreateSubscriptionErrorReason(code)) {
+        return new SubErrorResponse(
+            CreateSubscriptionErrorReasonFromJSON(code),
+            message,
+        );
+    }
+
+    return null;
 }

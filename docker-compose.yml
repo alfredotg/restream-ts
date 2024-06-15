@@ -1,34 +1,34 @@
 x-services:
-  rabbitmq: &rabbitmq
-    image: rabbitmq:3.13-management
-    volumes:
-      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+    rabbitmq: &rabbitmq
+        image: rabbitmq:3.13-management
+        volumes:
+            - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
 
 services:
-  rabbitmq:
-    <<: *rabbitmq
+    rabbitmq:
+        <<: *rabbitmq
 
-  restream-no-auth:
-    image: restream
-    depends_on:
-      - rabbitmq
-    environment:
-      - WS_MQTT_ADDR=0.0.0.0:7081
-      - STREAM_URL=rabbitmq://rabbitmq:5672/%2f
-      - LOG_FORMAT=full
-    ports:
-      - "127.0.0.1:7081:7081"
+    restream-no-auth:
+        image: restream
+        depends_on:
+            - rabbitmq
+        environment:
+            - WS_MQTT_ADDR=0.0.0.0:7081
+            - STREAM_URL=rabbitmq://rabbitmq:5672/%2f
+            - LOG_FORMAT=full
+        ports:
+            - "127.0.0.1:7081:7081"
 
-  restream-auth:
-    image: restream
-    depends_on:
-      - rabbitmq
-    environment:
-      - WS_MQTT_ADDR=0.0.0.0:7082
-      - STREAM_URL=rabbitmq://rabbitmq:5672/%2f
-      - LOG_FORMAT=full
-      - LOG_LEVEL=debug
-      - JWT_PUBLIC_KEY=c2VjcmV0 # secret
-      - JWT_SIGNING_ALGORITHM=HS256
-    ports:
-      - "127.0.0.1:7082:7082"
+    restream-auth:
+        image: restream
+        depends_on:
+            - rabbitmq
+        environment:
+            - WS_MQTT_ADDR=0.0.0.0:7082
+            - STREAM_URL=rabbitmq://rabbitmq:5672/%2f
+            - LOG_FORMAT=full
+            - LOG_LEVEL=debug
+            - JWT_PUBLIC_KEY=c2VjcmV0 # secret
+            - JWT_SIGNING_ALGORITHM=HS256
+        ports:
+            - "127.0.0.1:7082:7082"

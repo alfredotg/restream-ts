@@ -6,21 +6,19 @@ export class JsonRpc {
 
     public async call<T>(
         method: string,
-        params: any,
+        params: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     ): Promise<T | CallRpcError> {
-        const promise = new Promise<Buffer | CallRpcError>(
-            (resolve, reject) => {
-                const cmd: CallRpc = {
-                    cmd: "call_rpc",
-                    method: method,
-                    payload: Buffer.from(JSON.stringify(params)),
-                    callback: (response) => {
-                        resolve(response);
-                    },
-                };
-                this.transport.call_rpc(cmd);
-            },
-        );
+        const promise = new Promise<Buffer | CallRpcError>((resolve) => {
+            const cmd: CallRpc = {
+                cmd: "call_rpc",
+                method: method,
+                payload: Buffer.from(JSON.stringify(params)),
+                callback: (response) => {
+                    resolve(response);
+                },
+            };
+            this.transport.call_rpc(cmd);
+        });
 
         try {
             const data = await promise;

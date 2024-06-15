@@ -2,10 +2,16 @@ import { MqttWsTransport } from "../../../src/transport/mqtt_ws";
 import { Logger } from "tslog";
 import assert from "assert";
 import { Subscriber } from "../../../src/subscribe/subscriber";
-import { SubError } from "../../../src/transport/commands";
+import { SubError, SubErrorResponse } from "../../../src/transport/commands";
 import { ExponentialReconnectStrategy } from "../../../src/transport/reconnect";
-import { create_stream, create_token, get_server_url, get_server_url_with_auth } from "./common";
+import {
+    create_stream,
+    create_token,
+    get_server_url,
+    get_server_url_with_auth,
+} from "./common";
 import exp from "constants";
+import { CreateSubscriptionErrorReason } from "../../../src/api";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -71,15 +77,12 @@ test("connect with auth", async () => {
 });
 
 test("auth failed requires new token", async () => {
-    let tokens = [
-        'invalid',
-        create_token(),
-    ];
+    let tokens = ["invalid", create_token()];
 
     const transport = new MqttWsTransport({
         url: get_server_url_with_auth(),
         tokenRefresh: async () => {
-            return tokens.shift() ?? '';
+            return tokens.shift() ?? "";
         },
         reconnectStrategy: new ExponentialReconnectStrategy(1),
     });
@@ -93,8 +96,7 @@ test("auth failed requires new token", async () => {
 });
 
 test("subscribe with permission", async () => {
-
-    let stream_name : string;
+    let stream_name: string;
 
     {
         const transport = new MqttWsTransport({
@@ -105,9 +107,14 @@ test("subscribe with permission", async () => {
 
         transport.close();
     }
-    
+
     let tokens = [
-        create_token({subscribe: {subsLimits: [], topics: [{topic: stream_name + "/test"}]}}),
+        create_token({
+            subscribe: {
+                subsLimits: [],
+                topics: [{ topic: stream_name + "/test" }],
+            },
+        }),
     ];
 
     const transport = new MqttWsTransport({
@@ -120,7 +127,6 @@ test("subscribe with permission", async () => {
             }
             return token;
         },
-        debug: true,
     });
 
     let state_stream = transport.state();
@@ -139,8 +145,11 @@ test("subscribe with permission", async () => {
         immediately: true,
     });
 
-    console.log(stream);
     expect(stream instanceof SubError).toBe(true);
+    const response = (stream as SubError).error as SubErrorResponse;
+    expect(response.reason_code).toBe(
+        CreateSubscriptionErrorReason.Unauthorized,
+    );
 
     await transport.close();
 });

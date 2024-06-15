@@ -1,13 +1,15 @@
-import { IncomingMessage, SubError } from "../../../src/transport/commands";
+import {
+    IncomingMessage,
+    SubError,
+    SubErrorResponse,
+} from "../../../src/transport/commands";
 import { MqttWsTransport } from "../../../src/transport/mqtt_ws";
 import { Logger } from "tslog";
-import { JsonRpc } from "../../../src/rpc/json_rpc";
-import { EmptyResponse, RpcResponse } from "../../../src/rpc/types";
 import assert from "assert";
 import { Publisher } from "../../../src/publish/publisher";
 import { Subscriber } from "../../../src/subscribe/subscriber";
-
 import { create_stream, get_server_url } from "./common";
+import { CreateSubscriptionErrorReason } from "../../../src/api";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -53,7 +55,7 @@ describe("Subscriptions", () => {
     beforeEach(() => {
         return (async function () {
             transport = new MqttWsTransport({
-                url: get_server_url()
+                url: get_server_url(),
             });
             stream_name = await create_stream(transport);
         })();
@@ -172,5 +174,20 @@ describe("Subscriptions", () => {
         expect(value.topic).toBe("");
         expect(value.message.toString()).toBe("");
         expect(value.offset).toBe(0);
+    });
+
+    test("stream not found", async () => {
+        if (transport === null || stream_name === null) {
+            assert.fail("transport or stream_name is null");
+        }
+        const publisher = new Publisher(transport);
+        const subscriber = new Subscriber(transport);
+
+        const sub = await subscriber.subscribe(stream_name + "_NOT_FOUND/1111");
+        expect(sub).toBeInstanceOf(SubError);
+        const response = (sub as SubError).error as SubErrorResponse;
+        expect(response.reason_code).toBe(
+            CreateSubscriptionErrorReason.NotFound,
+        );
     });
 });

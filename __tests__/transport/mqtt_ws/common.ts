@@ -13,10 +13,8 @@ export function get_server_url_with_auth(): string {
 }
 
 // Warning: Never create tokens on the client side in production code.
-export function create_token(
-    claims?: ModulesClaims
-): string {
-    const token : JwtToken = {sub: 'user', exp: 9223372036854775807};
+export function create_token(claims?: ModulesClaims): string {
+    const token: JwtToken = { sub: "user", exp: 9223372036854775807 };
 
     if (claims) {
         token.connLimits = claims.connLimits;
@@ -25,7 +23,7 @@ export function create_token(
         token.subscribe = claims.subscribe;
     }
 
-    return jwt.sign(JwtTokenToJSON(token), 'secret');
+    return jwt.sign(JwtTokenToJSON(token), "secret");
 }
 
 let stream_name_prefix = "ts_test_stream_";
@@ -51,12 +49,9 @@ export async function create_stream(transport: ITransport): Promise<string> {
     );
     expect("ok" in response).toBe(true);
 
-    response = await rpc.call<RpcResponse<EmptyResponse>>(
-        "streams/create",
-        {
-            name: stream_name,
-        },
-    );
+    response = await rpc.call<RpcResponse<EmptyResponse>>("streams/create", {
+        name: stream_name,
+    });
     expect("ok" in response).toBe(true);
 
     return stream_name;
