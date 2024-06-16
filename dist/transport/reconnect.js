@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExponentialReconnectStrategy = exports.OnceConnectStrategy = void 0;
-const clock_1 = require("@/time/clock");
+const clock_1 = require("../time/clock");
 class OnceConnectStrategy {
     async run(state, connect) {
         for await (const value of state.stream) {

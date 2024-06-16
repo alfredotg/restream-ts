@@ -1,5 +1,5 @@
-import { CancelableStream } from "@/sync/types";
-import { IClockInterface } from "@/time/clock";
+import { CancelableStream } from "../sync/types";
+import { IClockInterface } from "../time/clock";
 import { ConnectionState } from "./connection_state";
 type ConnectCallback = () => Promise<void>;
 export interface IReconnectStrategy {

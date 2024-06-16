@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { CreateSubscriptionErrorReason } from "@/api";
+import { CreateSubscriptionErrorReason } from "../api";
 export type Subscribe = {
     cmd: "subscribe";
     topic: string;

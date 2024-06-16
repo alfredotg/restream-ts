@@ -1,12 +1,11 @@
 import { Logger, ILogObj } from "tslog";
 import { Subscribe, Unsubscribe, CallRpc, Publish } from "./commands";
 import { ConnectionState } from "./connection_state";
-import { CancelableStream } from "@/sync/types";
+import { CancelableStream } from "../sync/types";
 import { ITransport } from "./transport";
 import { IReconnectStrategy } from "./reconnect";
 export type MqttWsTransportOptions = {
     url: string;
-    token?: string;
     logger?: Logger<ILogObj>;
     debug?: boolean;
     reconnectStrategy?: IReconnectStrategy;

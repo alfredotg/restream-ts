@@ -28,7 +28,6 @@ import {
 
 export type MqttWsTransportOptions = {
     url: string;
-    token?: string;
     logger?: Logger<ILogObj>;
     debug?: boolean;
     reconnectStrategy?: IReconnectStrategy;
