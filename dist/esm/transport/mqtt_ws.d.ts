@@ -1,0 +1,41 @@
+import { Logger, ILogObj } from "tslog";
+import { Subscribe, Unsubscribe, CallRpc, Publish } from "./commands";
+import { ConnectionState } from "./connection_state";
+import { CancelableStream } from "../sync/types";
+import { ITransport } from "./transport";
+import { IReconnectStrategy } from "./reconnect";
+export type MqttWsTransportOptions = {
+    url: string;
+    logger?: Logger<ILogObj>;
+    debug?: boolean;
+    reconnectStrategy?: IReconnectStrategy;
+    tokenRefresh?: () => Promise<string>;
+};
+export declare class MqttWsTransport implements ITransport {
+    private client;
+    private subscriptions;
+    private logger?;
+    private stateBroadcast;
+    private rpcId;
+    private subId;
+    private rpcCallbacks;
+    private closed;
+    private token;
+    private subErrorReasons;
+    constructor(options: MqttWsTransportOptions);
+    waitConnected(): Promise<void>;
+    publish(command: Publish): void;
+    close(): Promise<void>;
+    state(): CancelableStream<ConnectionState>;
+    sub_count(): number;
+    subscribe(command: Subscribe): number;
+    unsubscribe(command: Unsubscribe): void;
+    call_rpc(command: CallRpc): void;
+    private onRpcError;
+    private onRpcResponse;
+    private onConnect;
+    private onDisconnect;
+    private onMessage;
+    private onSubscriptionMessage;
+    private callback;
+}

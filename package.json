@@ -2,12 +2,15 @@
   "name": "restream-ts",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "prepare": "tsc && tsc-alias",
-    "build": "tsc && tsc-alias"
+    "prepare": "husky",
+    "build": "rm -rf dist/ && npm run build-esm && npm run build-cjs",
+    "build-esm": "tsc && tsc-alias",
+    "build-cjs": "tsc -b tsconfig.cjs.json && tsc-alias -p tsconfig.cjs.json"
   },
   "keywords": [],
   "author": "",
@@ -43,6 +46,7 @@
     "tslog": "^4.9.2"
   },
   "files": [
-    "/dist"
+    "/dist",
+    "/src"
   ]
 }

@@ -1,8 +1,4 @@
-import mqtt, {
-    ErrorWithReasonCode,
-    IClientPublishOptions,
-    IClientSubscribeOptions,
-} from "mqtt";
+import mqtt from "mqtt";
 import { Logger, ILogObj } from "tslog";
 import { QoS, UserProperties } from "mqtt-packet";
 import {
@@ -149,7 +145,7 @@ export class MqttWsTransport implements ITransport {
                     });
 
                     this.client.on("error", (err) => {
-                        if (err instanceof ErrorWithReasonCode) {
+                        if (err instanceof mqtt.ErrorWithReasonCode) {
                             if (err.code == CONN_ACK_REASON_NOT_AUTHORIZED) {
                                 this.token = null;
                             }
@@ -182,7 +178,7 @@ export class MqttWsTransport implements ITransport {
     }
 
     publish(command: Publish): void {
-        const opts: IClientPublishOptions = {
+        const opts: mqtt.IClientPublishOptions = {
             qos: command.callback ? 1 : (0 as QoS),
         };
         this.client.publish(
@@ -243,7 +239,7 @@ export class MqttWsTransport implements ITransport {
 
         this.subscriptions.set(subId, command);
 
-        const options: IClientSubscribeOptions = {
+        const options: mqtt.IClientSubscribeOptions = {
             qos: 1 as QoS,
             properties: {
                 subscriptionIdentifier: subId,
@@ -314,7 +310,7 @@ export class MqttWsTransport implements ITransport {
         }
         this.subscriptions.delete(command.sub_id);
 
-        const opts: IClientSubscribeOptions = {
+        const opts: mqtt.IClientSubscribeOptions = {
             qos: 0 as QoS,
             properties: {
                 userProperties: {
@@ -334,7 +330,7 @@ export class MqttWsTransport implements ITransport {
         const rpc_id = this.rpcId++;
         this.rpcCallbacks.set(rpc_id, command.callback);
 
-        const opts: IClientPublishOptions = {
+        const opts: mqtt.IClientPublishOptions = {
             qos: 1 as QoS,
             properties: {
                 responseTopic: RPC_RESPONSE_TOPIC,
