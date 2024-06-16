@@ -20,10 +20,6 @@ class PubError {
     }
 }
 exports.PubError = PubError;
-/**
- * Transport level error
- * e.g. connection error, incorrect message format, permission denied, etc.
- */
 class CallRpcError {
     constructor(error) {
         this.error = error;

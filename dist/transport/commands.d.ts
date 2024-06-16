@@ -45,10 +45,6 @@ export type PubErrorResponse = {
     reasonCode?: number;
     reasonString?: string;
 };
-/**
- * Transport level error
- * e.g. connection error, incorrect message format, permission denied, etc.
- */
 export declare class CallRpcError {
     error: Error;
     constructor(error: Error);

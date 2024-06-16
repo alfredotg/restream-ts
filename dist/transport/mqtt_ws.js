@@ -59,7 +59,7 @@ class MqttWsTransport {
                 return url;
             },
             log: this.logger && options.debug
-                ? (...args) => this.logger?.debug(args) // eslint-disable-line @typescript-eslint/no-explicit-any
+                ? (...args) => this.logger?.debug(args)
                 : undefined,
         });
         reconnectStrategy
