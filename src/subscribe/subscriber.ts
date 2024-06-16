@@ -3,7 +3,7 @@ import { CancelableStream } from "../sync/types";
 import { IncomingMessage, SubError, Subscribe } from "../transport/commands";
 import { ITransport } from "../transport/transport";
 
-interface ISubscribeOptions {
+export interface ISubscribeOptions {
     offset?: number;
     recoverable?: boolean;
     immediately?: boolean; // Don't wait for connection to be established

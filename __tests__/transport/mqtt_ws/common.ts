@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
-import { JwtToken, JwtTokenToJSON, ModulesClaims } from "../../../src/api";
-import { ITransport } from "../../../src/transport/transport";
-import { JsonRpc } from "../../../src/rpc/json_rpc";
-import { EmptyResponse, RpcResponse } from "../../../src/rpc/types";
+import {
+    api,
+    ITransport,
+    JsonRpc,
+    RpcResponse,
+    EmptyResponse,
+} from "../../../src/index";
 
 export function get_server_url(): string {
     return process.env.MQTT_WS_URL || "ws://127.0.0.1:7081";
@@ -13,8 +16,8 @@ export function get_server_url_with_auth(): string {
 }
 
 // Warning: Never create tokens on the client side in production code.
-export function create_token(claims?: ModulesClaims): string {
-    const token: JwtToken = { sub: "user", exp: 9223372036854775807 };
+export function create_token(claims?: api.ModulesClaims): string {
+    const token: api.JwtToken = { sub: "user", exp: 9223372036854775807 };
 
     if (claims) {
         token.connLimits = claims.connLimits;
@@ -23,7 +26,7 @@ export function create_token(claims?: ModulesClaims): string {
         token.subscribe = claims.subscribe;
     }
 
-    return jwt.sign(JwtTokenToJSON(token), "secret");
+    return jwt.sign(api.JwtTokenToJSON(token), "secret");
 }
 
 let stream_name_prefix = "ts_test_stream_";

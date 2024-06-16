@@ -12,3 +12,5 @@ export interface ITransport {
     call_rpc(command: CallRpc): void;
     publish(command: Publish): void;
 }
+
+export { CancelableStream, ConnectionState };

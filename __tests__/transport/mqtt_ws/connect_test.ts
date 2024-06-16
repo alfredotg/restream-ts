@@ -1,17 +1,19 @@
-import { MqttWsTransport } from "../../../src/transport/mqtt_ws";
-import { Logger } from "tslog";
+import {
+    MqttWsTransport,
+    Subscriber,
+    SubError,
+    SubErrorResponse,
+    ExponentialReconnectStrategy,
+    api,
+} from "../../../src/index";
+
 import assert from "assert";
-import { Subscriber } from "../../../src/subscribe/subscriber";
-import { SubError, SubErrorResponse } from "../../../src/transport/commands";
-import { ExponentialReconnectStrategy } from "../../../src/transport/reconnect";
 import {
     create_stream,
     create_token,
     get_server_url,
     get_server_url_with_auth,
 } from "./common";
-import exp from "constants";
-import { CreateSubscriptionErrorReason } from "../../../src/api";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -148,7 +150,7 @@ test("subscribe with permission", async () => {
     expect(stream instanceof SubError).toBe(true);
     const response = (stream as SubError).error as SubErrorResponse;
     expect(response.reason_code).toBe(
-        CreateSubscriptionErrorReason.Unauthorized,
+        api.CreateSubscriptionErrorReason.Unauthorized,
     );
 
     await transport.close();
