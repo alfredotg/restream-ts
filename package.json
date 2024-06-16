@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "prepare": "husky",
+    "prepare": "tsc && tsc-alias",
     "build": "tsc && tsc-alias"
   },
   "keywords": [],
@@ -27,7 +27,8 @@
     "prettier": "3.3.0",
     "ts-jest": "^29.1.2",
     "tsc-alias": "^1.8.10",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.3",
+    "typescript-eslint": "^7.13.0"
   },
   "jest": {
     "preset": "ts-jest",
@@ -39,7 +40,6 @@
   "dependencies": {
     "denque": "^2.1.0",
     "mqtt": "^5.5.0",
-    "tslog": "^4.9.2",
-    "typescript-eslint": "^7.13.0"
+    "tslog": "^4.9.2"
   }
 }
