@@ -53,3 +53,4 @@ function ModulesClaimsToJSON(value) {
     };
 }
 exports.ModulesClaimsToJSON = ModulesClaimsToJSON;
+//# sourceMappingURL=ModulesClaims.js.map

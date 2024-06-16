@@ -1,13 +1,13 @@
 export interface IClockInterface {
-    now(): DOMHighResTimeStamp;
+    now(): number;
     sleep(ms: number): Promise<void>;
 }
 export declare class Clock implements IClockInterface {
-    now(): DOMHighResTimeStamp;
+    now(): number;
     sleep(ms: number): Promise<void>;
 }
 export declare class FrozenClock implements IClockInterface {
-    time: DOMHighResTimeStamp;
-    now(): DOMHighResTimeStamp;
+    time: number;
+    now(): number;
     sleep(ms: number): Promise<void>;
 }

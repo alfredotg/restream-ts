@@ -34,3 +34,4 @@ class Watch {
     }
 }
 exports.Watch = Watch;
+//# sourceMappingURL=watch.js.map

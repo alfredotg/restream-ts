@@ -50,3 +50,4 @@ function CreateSubscriptionErrorReasonToJSON(value) {
     return value;
 }
 exports.CreateSubscriptionErrorReasonToJSON = CreateSubscriptionErrorReasonToJSON;
+//# sourceMappingURL=CreateSubscriptionErrorReason.js.map

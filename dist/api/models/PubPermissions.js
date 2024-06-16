@@ -46,3 +46,4 @@ function PubPermissionsToJSON(value) {
     };
 }
 exports.PubPermissionsToJSON = PubPermissionsToJSON;
+//# sourceMappingURL=PubPermissions.js.map

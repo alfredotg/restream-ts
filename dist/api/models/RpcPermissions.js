@@ -46,3 +46,4 @@ function RpcPermissionsToJSON(value) {
     };
 }
 exports.RpcPermissionsToJSON = RpcPermissionsToJSON;
+//# sourceMappingURL=RpcPermissions.js.map

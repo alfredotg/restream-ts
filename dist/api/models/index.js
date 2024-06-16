@@ -25,3 +25,4 @@ __exportStar(require("./RpcPermission"), exports);
 __exportStar(require("./RpcPermissions"), exports);
 __exportStar(require("./SubPermission"), exports);
 __exportStar(require("./SubPermissions"), exports);
+//# sourceMappingURL=index.js.map

@@ -40,3 +40,4 @@ Object.defineProperty(exports, "ExponentialReconnectStrategy", { enumerable: tru
 Object.defineProperty(exports, "OnceConnectStrategy", { enumerable: true, get: function () { return reconnect_1.OnceConnectStrategy; } });
 var publisher_1 = require("./publish/publisher");
 Object.defineProperty(exports, "Publisher", { enumerable: true, get: function () { return publisher_1.Publisher; } });
+//# sourceMappingURL=index.js.map

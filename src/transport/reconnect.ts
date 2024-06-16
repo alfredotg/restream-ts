@@ -32,7 +32,7 @@ export class ExponentialReconnectStrategy implements IReconnectStrategy {
     private readonly backoff: number;
     private retries: number = 0;
     private wakeUp: () => void = () => {};
-    private connectedAt: DOMHighResTimeStamp = -1;
+    private connectedAt: number = -1;
     public clock: IClockInterface = new Clock();
 
     public constructor(

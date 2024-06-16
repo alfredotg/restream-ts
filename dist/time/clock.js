@@ -24,3 +24,4 @@ class FrozenClock {
     }
 }
 exports.FrozenClock = FrozenClock;
+//# sourceMappingURL=clock.js.map

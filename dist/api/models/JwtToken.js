@@ -61,3 +61,4 @@ function JwtTokenToJSON(value) {
     };
 }
 exports.JwtTokenToJSON = JwtTokenToJSON;
+//# sourceMappingURL=JwtToken.js.map

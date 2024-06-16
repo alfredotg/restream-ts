@@ -1,10 +1,10 @@
 export interface IClockInterface {
-    now(): DOMHighResTimeStamp;
+    now(): number;
     sleep(ms: number): Promise<void>;
 }
 
 export class Clock implements IClockInterface {
-    public now(): DOMHighResTimeStamp {
+    public now(): number {
         return performance.now();
     }
 
@@ -16,9 +16,9 @@ export class Clock implements IClockInterface {
 }
 
 export class FrozenClock implements IClockInterface {
-    public time: DOMHighResTimeStamp = 0;
+    public time: number = 0;
 
-    public now(): DOMHighResTimeStamp {
+    public now(): number {
         return this.time;
     }
 

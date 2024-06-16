@@ -63,3 +63,4 @@ class MPSCStream {
     }
 }
 exports.MPSCStream = MPSCStream;
+//# sourceMappingURL=mpsc.js.map

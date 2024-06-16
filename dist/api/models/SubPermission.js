@@ -45,3 +45,4 @@ function SubPermissionToJSON(value) {
     };
 }
 exports.SubPermissionToJSON = SubPermissionToJSON;
+//# sourceMappingURL=SubPermission.js.map

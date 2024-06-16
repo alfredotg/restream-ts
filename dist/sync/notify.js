@@ -16,3 +16,4 @@ class Notify {
     }
 }
 exports.Notify = Notify;
+//# sourceMappingURL=notify.js.map

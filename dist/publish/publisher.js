@@ -28,3 +28,4 @@ class Publisher {
     }
 }
 exports.Publisher = Publisher;
+//# sourceMappingURL=publisher.js.map
