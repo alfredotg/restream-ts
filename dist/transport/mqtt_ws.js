@@ -1,40 +1,14 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MqttWsTransport = void 0;
-const mqtt_1 = __importStar(require("mqtt"));
-const commands_1 = require("./commands");
-const watch_1 = require("../sync/watch");
-const reconnect_1 = require("./reconnect");
-const api_1 = require("../api");
+import mqtt, { ErrorWithReasonCode, } from "mqtt";
+import { CallRpcError, PubError, SubError, SubErrorResponse, } from "./commands";
+import { Watch } from "../sync/watch";
+import { OnceConnectStrategy } from "./reconnect";
+import { CreateSubscriptionErrorReasonFromJSON, instanceOfCreateSubscriptionErrorReason, } from "../api";
 const RPC_RESPONSE_TOPIC = "$RS/rpc/response";
 const SUB_ID_PROPERTY_NAME = "sub_id";
 const OFFSET_PROPERTY_NAME = "offset";
 const RECOVERABLE_SUB_PROPERTY_NAME = "recoverable";
 const CONN_ACK_REASON_NOT_AUTHORIZED = 135;
-class MqttWsTransport {
+export class MqttWsTransport {
     constructor(options) {
         this.rpcId = 0;
         this.subId = 0;
@@ -43,12 +17,12 @@ class MqttWsTransport {
         this.token = null;
         this.subErrorReasons = new Map();
         this.logger = options.logger;
-        this.stateBroadcast = new watch_1.Watch({
+        this.stateBroadcast = new Watch({
             cmd: "disconnected",
         });
         this.subscriptions = new Map();
-        const reconnectStrategy = options.reconnectStrategy || new reconnect_1.OnceConnectStrategy();
-        this.client = mqtt_1.default.connect(options.url, {
+        const reconnectStrategy = options.reconnectStrategy || new OnceConnectStrategy();
+        this.client = mqtt.connect(options.url, {
             manualConnect: true,
             protocolVersion: 5,
             reconnectPeriod: 0,
@@ -59,7 +33,7 @@ class MqttWsTransport {
                 return url;
             },
             log: this.logger && options.debug
-                ? (...args) => { var _a; return (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(args); } // eslint-disable-line @typescript-eslint/no-explicit-any
+                ? (...args) => this.logger?.debug(args) // eslint-disable-line @typescript-eslint/no-explicit-any
                 : undefined,
         });
         reconnectStrategy
@@ -71,11 +45,10 @@ class MqttWsTransport {
                 this.onMessage(receivedTopic, message, packet);
             });
             this.client.on("packetreceive", (packet) => {
-                var _a, _b, _c, _d, _e;
                 if (packet.cmd === "suback" &&
                     packet.granted.length !== 0 &&
                     packet.granted[0] !== 0) {
-                    let subIdProperty = (_b = (_a = packet.properties) === null || _a === void 0 ? void 0 : _a.userProperties) === null || _b === void 0 ? void 0 : _b.sub_id;
+                    let subIdProperty = packet.properties?.userProperties?.sub_id;
                     if (Array.isArray(subIdProperty)) {
                         subIdProperty = subIdProperty.shift();
                     }
@@ -83,12 +56,12 @@ class MqttWsTransport {
                         return;
                     }
                     const subId = parseInt(subIdProperty, 10);
-                    const reason = parseReasonString(((_c = packet.properties) === null || _c === void 0 ? void 0 : _c.reasonString) || "");
+                    const reason = parseReasonString(packet.properties?.reasonString || "");
                     if (reason) {
                         this.subErrorReasons.set(subId, reason);
                     }
                     else {
-                        (_d = this.logger) === null || _d === void 0 ? void 0 : _d.error("Failed to parse reason string", (_e = packet.properties) === null || _e === void 0 ? void 0 : _e.reasonString);
+                        this.logger?.error("Failed to parse reason string", packet.properties?.reasonString);
                     }
                 }
             });
@@ -96,7 +69,6 @@ class MqttWsTransport {
                 this.token = await options.tokenRefresh();
             }
             return await new Promise((resolve, reject) => {
-                var _a;
                 if (this.closed) {
                     return;
                 }
@@ -115,25 +87,23 @@ class MqttWsTransport {
                     }
                 });
                 this.client.on("error", (err) => {
-                    var _a;
-                    if (err instanceof mqtt_1.ErrorWithReasonCode) {
+                    if (err instanceof ErrorWithReasonCode) {
                         if (err.code == CONN_ACK_REASON_NOT_AUTHORIZED) {
                             this.token = null;
                         }
                     }
-                    (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error(err);
+                    this.logger?.error(err);
                     if (!resolved) {
                         resolved = true;
                         reject(err);
                     }
                 });
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.info("Connecting to", options.url);
+                this.logger?.info("Connecting to", options.url);
                 this.client.connect();
             });
         })
             .catch((err) => {
-            var _a;
-            (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error(err);
+            this.logger?.error(err);
         });
     }
     async waitConnected() {
@@ -148,22 +118,21 @@ class MqttWsTransport {
             qos: command.callback ? 1 : 0,
         };
         this.client.publish(command.topic, command.message, opts, (transportError, packet) => {
-            var _a, _b, _c;
             let error = undefined;
             if (transportError) {
-                error = new commands_1.PubError(transportError);
+                error = new PubError(transportError);
             }
-            if ((packet === null || packet === void 0 ? void 0 : packet.cmd) == "puback" && packet.reasonCode !== 0) {
+            if (packet?.cmd == "puback" && packet.reasonCode !== 0) {
                 if (error === undefined ||
-                    ((_a = packet.properties) === null || _a === void 0 ? void 0 : _a.reasonString)) {
-                    error = new commands_1.PubError({
+                    packet.properties?.reasonString) {
+                    error = new PubError({
                         reasonCode: packet.reasonCode,
-                        reasonString: (_b = packet.properties) === null || _b === void 0 ? void 0 : _b.reasonString,
+                        reasonString: packet.properties?.reasonString,
                     });
                 }
             }
             if (error) {
-                (_c = this.logger) === null || _c === void 0 ? void 0 : _c.error(error);
+                this.logger?.error(error);
             }
             if (command.callback) {
                 command.callback(error);
@@ -206,7 +175,6 @@ class MqttWsTransport {
             options.properties.userProperties = userProperties;
         }
         this.client.subscribe(command.topic, options, (err, subs) => {
-            var _a;
             const reasonResponse = this.subErrorReasons.get(subId);
             this.subErrorReasons.delete(subId);
             if (subs) {
@@ -222,10 +190,10 @@ class MqttWsTransport {
                 return;
             }
             if (err) {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error("Subscribe error", err, reasonResponse);
+                this.logger?.error("Subscribe error", err, reasonResponse);
                 this.subscriptions.delete(subId);
                 this.callback(() => command.suback &&
-                    command.suback(new commands_1.SubError(reasonResponse || err)));
+                    command.suback(new SubError(reasonResponse || err)));
             }
             else {
                 this.callback(() => command.suback &&
@@ -251,9 +219,8 @@ class MqttWsTransport {
             },
         };
         this.client.unsubscribe(sub.topic, opts, (err) => {
-            var _a;
             if (err) {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error(err);
+                this.logger?.error(err);
             }
         });
     }
@@ -268,9 +235,8 @@ class MqttWsTransport {
             },
         };
         this.client.publish("$RS/rpc/" + command.method, command.payload, opts, (err) => {
-            var _a;
             if (err) {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error(err);
+                this.logger?.error(err);
                 this.onRpcError(rpc_id, err);
             }
         });
@@ -279,36 +245,35 @@ class MqttWsTransport {
         const callback = this.rpcCallbacks.get(rpc_id);
         if (callback) {
             this.rpcCallbacks.delete(rpc_id);
-            this.callback(() => callback(new commands_1.CallRpcError(err)));
+            this.callback(() => callback(new CallRpcError(err)));
         }
     }
     onRpcResponse(body, packet) {
-        var _a, _b, _c, _d, _e, _f, _g;
-        const rpc_id = parseInt(((_b = (_a = packet.properties) === null || _a === void 0 ? void 0 : _a.correlationData) === null || _b === void 0 ? void 0 : _b.toString()) || "");
+        const rpc_id = parseInt(packet.properties?.correlationData?.toString() || "");
         if (isNaN(rpc_id)) {
-            (_c = this.logger) === null || _c === void 0 ? void 0 : _c.error("Missing rpc id");
+            this.logger?.error("Missing rpc id");
             return;
         }
         const callback = this.rpcCallbacks.get(rpc_id);
         if (callback) {
             this.rpcCallbacks.delete(rpc_id);
-            let statusHeader = (_e = (_d = packet.properties) === null || _d === void 0 ? void 0 : _d.userProperties) === null || _e === void 0 ? void 0 : _e.status;
+            let statusHeader = packet.properties?.userProperties?.status;
             if (Array.isArray(statusHeader)) {
                 statusHeader = statusHeader.shift();
             }
-            const statusParts = statusHeader === null || statusHeader === void 0 ? void 0 : statusHeader.split(" ");
-            const status = statusParts === null || statusParts === void 0 ? void 0 : statusParts.shift();
-            const message = statusParts === null || statusParts === void 0 ? void 0 : statusParts.join(" ");
+            const statusParts = statusHeader?.split(" ");
+            const status = statusParts?.shift();
+            const message = statusParts?.join(" ");
             if (status === "200") {
                 this.callback(() => callback(body));
             }
             else if (status === "500") {
-                (_f = this.logger) === null || _f === void 0 ? void 0 : _f.warn("Rpc error", message);
-                this.callback(() => callback(new commands_1.CallRpcError(new Error(message || "Internal server error"))));
+                this.logger?.warn("Rpc error", message);
+                this.callback(() => callback(new CallRpcError(new Error(message || "Internal server error"))));
             }
             else {
-                (_g = this.logger) === null || _g === void 0 ? void 0 : _g.error("Invalid status", statusHeader);
-                this.callback(() => callback(new commands_1.CallRpcError(new Error("Invalid status"))));
+                this.logger?.error("Invalid status", statusHeader);
+                this.callback(() => callback(new CallRpcError(new Error("Invalid status"))));
             }
         }
     }
@@ -320,12 +285,12 @@ class MqttWsTransport {
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();
         for (const sub of subscriptions.values()) {
-            this.callback(() => sub.callback(new commands_1.SubError(new Error("Disconnected"))));
+            this.callback(() => sub.callback(new SubError(new Error("Disconnected"))));
         }
         const rpcCallbacks = this.rpcCallbacks;
         this.rpcCallbacks = new Map();
         for (const callback of rpcCallbacks.values()) {
-            this.callback(() => callback(new commands_1.CallRpcError(new Error("Disconnected"))));
+            this.callback(() => callback(new CallRpcError(new Error("Disconnected"))));
         }
         if (this.closed) {
             this.stateBroadcast.set({ cmd: "closed" });
@@ -345,10 +310,9 @@ class MqttWsTransport {
         }
     }
     onSubscriptionMessage(receivedTopic, body, packet) {
-        var _a;
         const maybe_message = parseMessage(receivedTopic, body, packet);
         if (maybe_message instanceof Error) {
-            (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error(maybe_message);
+            this.logger?.error(maybe_message);
             return;
         }
         const message = maybe_message;
@@ -360,28 +324,25 @@ class MqttWsTransport {
         }
     }
     callback(callback) {
-        var _a;
         try {
             callback();
             return true;
         }
         catch (e) {
-            (_a = this.logger) === null || _a === void 0 ? void 0 : _a.error("Callback error", e);
+            this.logger?.error("Callback error", e);
         }
         return false;
     }
 }
-exports.MqttWsTransport = MqttWsTransport;
 function parseMessage(topic, message, packet) {
-    var _a, _b, _c;
-    let sub_id = (_a = packet.properties) === null || _a === void 0 ? void 0 : _a.subscriptionIdentifier;
+    let sub_id = packet.properties?.subscriptionIdentifier;
     if (sub_id && Array.isArray(sub_id)) {
         sub_id = sub_id.shift();
     }
     if (sub_id === undefined || isNaN(sub_id)) {
         return new Error("Missing subscription identifier");
     }
-    let offsetProp = (_c = (_b = packet.properties) === null || _b === void 0 ? void 0 : _b.userProperties) === null || _c === void 0 ? void 0 : _c.offset;
+    let offsetProp = packet.properties?.userProperties?.offset;
     if (Array.isArray(offsetProp)) {
         offsetProp = offsetProp.shift();
     }
@@ -401,8 +362,8 @@ function parseReasonString(reasonString) {
     const parts = reasonString.split(" ");
     const code = parts.shift();
     const message = parts.join(" ");
-    if ((0, api_1.instanceOfCreateSubscriptionErrorReason)(code)) {
-        return new commands_1.SubErrorResponse((0, api_1.CreateSubscriptionErrorReasonFromJSON)(code), message);
+    if (instanceOfCreateSubscriptionErrorReason(code)) {
+        return new SubErrorResponse(CreateSubscriptionErrorReasonFromJSON(code), message);
     }
     return null;
 }

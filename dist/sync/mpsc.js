@@ -1,19 +1,12 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MPSCStream = void 0;
-const notify_1 = require("./notify");
-const denque_1 = __importDefault(require("denque"));
-class MPSCStream {
+import { Notify } from "./notify";
+import Denque from "denque";
+export class MPSCStream {
     constructor(on_cancel) {
-        this.events = new denque_1.default();
+        this.events = new Denque();
         this.notify = null;
         this.on_cancel = on_cancel;
-        this.notify = new notify_1.Notify();
+        this.notify = new Notify();
         this.stream = (async function* (self) {
-            var _a;
             try {
                 while (self.notify !== null || self.events.length > 0) {
                     while (true) {
@@ -23,7 +16,7 @@ class MPSCStream {
                         }
                         yield value;
                     }
-                    const notified = (_a = self.notify) === null || _a === void 0 ? void 0 : _a.notified();
+                    const notified = self.notify?.notified();
                     if (notified !== null) {
                         await notified;
                     }
@@ -62,5 +55,4 @@ class MPSCStream {
         }
     }
 }
-exports.MPSCStream = MPSCStream;
 //# sourceMappingURL=mpsc.js.map

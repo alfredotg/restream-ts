@@ -1,4 +1,3 @@
-"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -12,53 +11,47 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.JwtTokenToJSON = exports.JwtTokenFromJSONTyped = exports.JwtTokenFromJSON = exports.instanceOfJwtToken = void 0;
-const RpcPermissions_1 = require("./RpcPermissions");
-const LimitByKey_1 = require("./LimitByKey");
-const PubPermissions_1 = require("./PubPermissions");
-const SubPermissions_1 = require("./SubPermissions");
+import { RpcPermissionsFromJSON, RpcPermissionsToJSON, } from './RpcPermissions';
+import { LimitByKeyFromJSON, LimitByKeyToJSON, } from './LimitByKey';
+import { PubPermissionsFromJSON, PubPermissionsToJSON, } from './PubPermissions';
+import { SubPermissionsFromJSON, SubPermissionsToJSON, } from './SubPermissions';
 /**
  * Check if a given object implements the JwtToken interface.
  */
-function instanceOfJwtToken(value) {
+export function instanceOfJwtToken(value) {
     if (!('sub' in value) || value['sub'] === undefined)
         return false;
     if (!('exp' in value) || value['exp'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfJwtToken = instanceOfJwtToken;
-function JwtTokenFromJSON(json) {
+export function JwtTokenFromJSON(json) {
     return JwtTokenFromJSONTyped(json, false);
 }
-exports.JwtTokenFromJSON = JwtTokenFromJSON;
-function JwtTokenFromJSONTyped(json, ignoreDiscriminator) {
+export function JwtTokenFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
     return {
-        'connLimits': json['conn_limits'] == null ? undefined : (json['conn_limits'].map(LimitByKey_1.LimitByKeyFromJSON)),
-        'publish': json['publish'] == null ? undefined : (0, PubPermissions_1.PubPermissionsFromJSON)(json['publish']),
-        'rpc': json['rpc'] == null ? undefined : (0, RpcPermissions_1.RpcPermissionsFromJSON)(json['rpc']),
-        'subscribe': json['subscribe'] == null ? undefined : (0, SubPermissions_1.SubPermissionsFromJSON)(json['subscribe']),
+        'connLimits': json['conn_limits'] == null ? undefined : (json['conn_limits'].map(LimitByKeyFromJSON)),
+        'publish': json['publish'] == null ? undefined : PubPermissionsFromJSON(json['publish']),
+        'rpc': json['rpc'] == null ? undefined : RpcPermissionsFromJSON(json['rpc']),
+        'subscribe': json['subscribe'] == null ? undefined : SubPermissionsFromJSON(json['subscribe']),
         'sub': json['sub'],
         'exp': json['exp'],
     };
 }
-exports.JwtTokenFromJSONTyped = JwtTokenFromJSONTyped;
-function JwtTokenToJSON(value) {
+export function JwtTokenToJSON(value) {
     if (value == null) {
         return value;
     }
     return {
-        'conn_limits': value['connLimits'] == null ? undefined : (value['connLimits'].map(LimitByKey_1.LimitByKeyToJSON)),
-        'publish': (0, PubPermissions_1.PubPermissionsToJSON)(value['publish']),
-        'rpc': (0, RpcPermissions_1.RpcPermissionsToJSON)(value['rpc']),
-        'subscribe': (0, SubPermissions_1.SubPermissionsToJSON)(value['subscribe']),
+        'conn_limits': value['connLimits'] == null ? undefined : (value['connLimits'].map(LimitByKeyToJSON)),
+        'publish': PubPermissionsToJSON(value['publish']),
+        'rpc': RpcPermissionsToJSON(value['rpc']),
+        'subscribe': SubPermissionsToJSON(value['subscribe']),
         'sub': value['sub'],
         'exp': value['exp'],
     };
 }
-exports.JwtTokenToJSON = JwtTokenToJSON;
 //# sourceMappingURL=JwtToken.js.map

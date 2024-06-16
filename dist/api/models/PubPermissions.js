@@ -1,4 +1,3 @@
-"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -12,38 +11,32 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PubPermissionsToJSON = exports.PubPermissionsFromJSONTyped = exports.PubPermissionsFromJSON = exports.instanceOfPubPermissions = void 0;
-const PubPermission_1 = require("./PubPermission");
+import { PubPermissionFromJSON, PubPermissionToJSON, } from './PubPermission';
 /**
  * Check if a given object implements the PubPermissions interface.
  */
-function instanceOfPubPermissions(value) {
+export function instanceOfPubPermissions(value) {
     if (!('topics' in value) || value['topics'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfPubPermissions = instanceOfPubPermissions;
-function PubPermissionsFromJSON(json) {
+export function PubPermissionsFromJSON(json) {
     return PubPermissionsFromJSONTyped(json, false);
 }
-exports.PubPermissionsFromJSON = PubPermissionsFromJSON;
-function PubPermissionsFromJSONTyped(json, ignoreDiscriminator) {
+export function PubPermissionsFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
     return {
-        'topics': (json['topics'].map(PubPermission_1.PubPermissionFromJSON)),
+        'topics': (json['topics'].map(PubPermissionFromJSON)),
     };
 }
-exports.PubPermissionsFromJSONTyped = PubPermissionsFromJSONTyped;
-function PubPermissionsToJSON(value) {
+export function PubPermissionsToJSON(value) {
     if (value == null) {
         return value;
     }
     return {
-        'topics': (value['topics'].map(PubPermission_1.PubPermissionToJSON)),
+        'topics': (value['topics'].map(PubPermissionToJSON)),
     };
 }
-exports.PubPermissionsToJSON = PubPermissionsToJSON;
 //# sourceMappingURL=PubPermissions.js.map

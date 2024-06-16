@@ -1,4 +1,3 @@
-"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -12,38 +11,32 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RpcPermissionsToJSON = exports.RpcPermissionsFromJSONTyped = exports.RpcPermissionsFromJSON = exports.instanceOfRpcPermissions = void 0;
-const RpcPermission_1 = require("./RpcPermission");
+import { RpcPermissionFromJSON, RpcPermissionToJSON, } from './RpcPermission';
 /**
  * Check if a given object implements the RpcPermissions interface.
  */
-function instanceOfRpcPermissions(value) {
+export function instanceOfRpcPermissions(value) {
     if (!('topics' in value) || value['topics'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfRpcPermissions = instanceOfRpcPermissions;
-function RpcPermissionsFromJSON(json) {
+export function RpcPermissionsFromJSON(json) {
     return RpcPermissionsFromJSONTyped(json, false);
 }
-exports.RpcPermissionsFromJSON = RpcPermissionsFromJSON;
-function RpcPermissionsFromJSONTyped(json, ignoreDiscriminator) {
+export function RpcPermissionsFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
     return {
-        'topics': (json['topics'].map(RpcPermission_1.RpcPermissionFromJSON)),
+        'topics': (json['topics'].map(RpcPermissionFromJSON)),
     };
 }
-exports.RpcPermissionsFromJSONTyped = RpcPermissionsFromJSONTyped;
-function RpcPermissionsToJSON(value) {
+export function RpcPermissionsToJSON(value) {
     if (value == null) {
         return value;
     }
     return {
-        'topics': (value['topics'].map(RpcPermission_1.RpcPermissionToJSON)),
+        'topics': (value['topics'].map(RpcPermissionToJSON)),
     };
 }
-exports.RpcPermissionsToJSON = RpcPermissionsToJSON;
 //# sourceMappingURL=RpcPermissions.js.map

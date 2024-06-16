@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Watch = void 0;
-const mpsc_1 = require("./mpsc");
-class Watch {
+import { MPSCStream } from "./mpsc";
+export class Watch {
     constructor(value) {
         this.value = value;
         this.listeners = [];
@@ -16,7 +13,7 @@ class Watch {
         return this.listeners.length;
     }
     subscribe() {
-        const listener = new mpsc_1.MPSCStream(() => {
+        const listener = new MPSCStream(() => {
             this.unsubscribe(listener);
         });
         listener.push(this.value);
@@ -33,5 +30,4 @@ class Watch {
         }
     }
 }
-exports.Watch = Watch;
 //# sourceMappingURL=watch.js.map

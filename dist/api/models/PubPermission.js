@@ -1,4 +1,3 @@
-"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -12,22 +11,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PubPermissionToJSON = exports.PubPermissionFromJSONTyped = exports.PubPermissionFromJSON = exports.instanceOfPubPermission = void 0;
 /**
  * Check if a given object implements the PubPermission interface.
  */
-function instanceOfPubPermission(value) {
+export function instanceOfPubPermission(value) {
     if (!('topic' in value) || value['topic'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfPubPermission = instanceOfPubPermission;
-function PubPermissionFromJSON(json) {
+export function PubPermissionFromJSON(json) {
     return PubPermissionFromJSONTyped(json, false);
 }
-exports.PubPermissionFromJSON = PubPermissionFromJSON;
-function PubPermissionFromJSONTyped(json, ignoreDiscriminator) {
+export function PubPermissionFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
@@ -35,8 +30,7 @@ function PubPermissionFromJSONTyped(json, ignoreDiscriminator) {
         'topic': json['topic'],
     };
 }
-exports.PubPermissionFromJSONTyped = PubPermissionFromJSONTyped;
-function PubPermissionToJSON(value) {
+export function PubPermissionToJSON(value) {
     if (value == null) {
         return value;
     }
@@ -44,5 +38,4 @@ function PubPermissionToJSON(value) {
         'topic': value['topic'],
     };
 }
-exports.PubPermissionToJSON = PubPermissionToJSON;
 //# sourceMappingURL=PubPermission.js.map

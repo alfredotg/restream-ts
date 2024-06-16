@@ -1,4 +1,3 @@
-"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -12,22 +11,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RpcPermissionToJSON = exports.RpcPermissionFromJSONTyped = exports.RpcPermissionFromJSON = exports.instanceOfRpcPermission = void 0;
 /**
  * Check if a given object implements the RpcPermission interface.
  */
-function instanceOfRpcPermission(value) {
+export function instanceOfRpcPermission(value) {
     if (!('topic' in value) || value['topic'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfRpcPermission = instanceOfRpcPermission;
-function RpcPermissionFromJSON(json) {
+export function RpcPermissionFromJSON(json) {
     return RpcPermissionFromJSONTyped(json, false);
 }
-exports.RpcPermissionFromJSON = RpcPermissionFromJSON;
-function RpcPermissionFromJSONTyped(json, ignoreDiscriminator) {
+export function RpcPermissionFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
@@ -35,8 +30,7 @@ function RpcPermissionFromJSONTyped(json, ignoreDiscriminator) {
         'topic': json['topic'],
     };
 }
-exports.RpcPermissionFromJSONTyped = RpcPermissionFromJSONTyped;
-function RpcPermissionToJSON(value) {
+export function RpcPermissionToJSON(value) {
     if (value == null) {
         return value;
     }
@@ -44,5 +38,4 @@ function RpcPermissionToJSON(value) {
         'topic': value['topic'],
     };
 }
-exports.RpcPermissionToJSON = RpcPermissionToJSON;
 //# sourceMappingURL=RpcPermission.js.map

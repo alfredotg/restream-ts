@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExponentialReconnectStrategy = exports.OnceConnectStrategy = void 0;
-const clock_1 = require("../time/clock");
-class OnceConnectStrategy {
+import { Clock } from "../time/clock";
+export class OnceConnectStrategy {
     async run(state, connect) {
         for await (const value of state.stream) {
             if (value.cmd !== "disconnected") {
@@ -13,13 +10,12 @@ class OnceConnectStrategy {
         }
     }
 }
-exports.OnceConnectStrategy = OnceConnectStrategy;
-class ExponentialReconnectStrategy {
+export class ExponentialReconnectStrategy {
     constructor(backoffMs = 600, maxDelayMs = -1, maxRetries = -1) {
         this.retries = 0;
         this.wakeUp = () => { };
         this.connectedAt = -1;
-        this.clock = new clock_1.Clock();
+        this.clock = new Clock();
         this.maxDelay = maxDelayMs;
         this.maxRetries = maxRetries;
         this.backoff = backoffMs;
@@ -68,5 +64,4 @@ class ExponentialReconnectStrategy {
         this.wakeUp();
     }
 }
-exports.ExponentialReconnectStrategy = ExponentialReconnectStrategy;
 //# sourceMappingURL=reconnect.js.map
