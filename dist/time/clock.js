@@ -1,4 +1,7 @@
-export class Clock {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.FrozenClock = exports.Clock = void 0;
+class Clock {
     now() {
         return performance.now();
     }
@@ -8,7 +11,8 @@ export class Clock {
         });
     }
 }
-export class FrozenClock {
+exports.Clock = Clock;
+class FrozenClock {
     constructor() {
         this.time = 0;
     }
@@ -19,4 +23,5 @@ export class FrozenClock {
         this.time += ms;
     }
 }
+exports.FrozenClock = FrozenClock;
 //# sourceMappingURL=clock.js.map

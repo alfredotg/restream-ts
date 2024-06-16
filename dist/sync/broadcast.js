@@ -1,5 +1,8 @@
-import { MPSCStream } from "./mpsc";
-export class BroadCast {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BroadCast = void 0;
+const mpsc_1 = require("./mpsc");
+class BroadCast {
     constructor() {
         this.listeners = [];
     }
@@ -10,7 +13,7 @@ export class BroadCast {
         return this.listeners.length;
     }
     subscribe() {
-        const listener = new MPSCStream(() => {
+        const listener = new mpsc_1.MPSCStream(() => {
             this.unsubscribe(listener);
         });
         this.listeners.push(listener);
@@ -23,4 +26,5 @@ export class BroadCast {
         }
     }
 }
+exports.BroadCast = BroadCast;
 //# sourceMappingURL=broadcast.js.map

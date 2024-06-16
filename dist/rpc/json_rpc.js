@@ -1,5 +1,8 @@
-import { CallRpcError } from "../transport/commands";
-export class JsonRpc {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.JsonRpc = void 0;
+const commands_1 = require("../transport/commands");
+class JsonRpc {
     constructor(transport) {
         this.transport = transport;
     }
@@ -17,14 +20,15 @@ export class JsonRpc {
         });
         try {
             const data = await promise;
-            if (data instanceof CallRpcError) {
+            if (data instanceof commands_1.CallRpcError) {
                 return data;
             }
             return JSON.parse(data.toString());
         }
         catch (error) {
-            return new CallRpcError(new Error("" + error));
+            return new commands_1.CallRpcError(new Error("" + error));
         }
     }
 }
+exports.JsonRpc = JsonRpc;
 //# sourceMappingURL=json_rpc.js.map

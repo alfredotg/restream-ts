@@ -1,4 +1,7 @@
-export class Notify {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Notify = void 0;
+class Notify {
     constructor() {
         this.resolve = () => { };
         this.promise = new Promise((r) => (this.resolve = r));
@@ -12,4 +15,5 @@ export class Notify {
         resolve();
     }
 }
+exports.Notify = Notify;
 //# sourceMappingURL=notify.js.map

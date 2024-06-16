@@ -1,3 +1,4 @@
+"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -11,20 +12,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LimitByKeyToJSON = exports.LimitByKeyFromJSONTyped = exports.LimitByKeyFromJSON = exports.instanceOfLimitByKey = void 0;
 /**
  * Check if a given object implements the LimitByKey interface.
  */
-export function instanceOfLimitByKey(value) {
+function instanceOfLimitByKey(value) {
     if (!('key' in value) || value['key'] === undefined)
         return false;
     if (!('limit' in value) || value['limit'] === undefined)
         return false;
     return true;
 }
-export function LimitByKeyFromJSON(json) {
+exports.instanceOfLimitByKey = instanceOfLimitByKey;
+function LimitByKeyFromJSON(json) {
     return LimitByKeyFromJSONTyped(json, false);
 }
-export function LimitByKeyFromJSONTyped(json, ignoreDiscriminator) {
+exports.LimitByKeyFromJSON = LimitByKeyFromJSON;
+function LimitByKeyFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
@@ -33,7 +38,8 @@ export function LimitByKeyFromJSONTyped(json, ignoreDiscriminator) {
         'limit': json['limit'],
     };
 }
-export function LimitByKeyToJSON(value) {
+exports.LimitByKeyFromJSONTyped = LimitByKeyFromJSONTyped;
+function LimitByKeyToJSON(value) {
     if (value == null) {
         return value;
     }
@@ -42,4 +48,5 @@ export function LimitByKeyToJSON(value) {
         'limit': value['limit'],
     };
 }
+exports.LimitByKeyToJSON = LimitByKeyToJSON;
 //# sourceMappingURL=LimitByKey.js.map

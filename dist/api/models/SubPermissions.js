@@ -1,3 +1,4 @@
+"use strict";
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -11,37 +12,43 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { SubPermissionFromJSON, SubPermissionToJSON, } from './SubPermission';
-import { LimitByKeyFromJSON, LimitByKeyToJSON, } from './LimitByKey';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SubPermissionsToJSON = exports.SubPermissionsFromJSONTyped = exports.SubPermissionsFromJSON = exports.instanceOfSubPermissions = void 0;
+const SubPermission_1 = require("./SubPermission");
+const LimitByKey_1 = require("./LimitByKey");
 /**
  * Check if a given object implements the SubPermissions interface.
  */
-export function instanceOfSubPermissions(value) {
+function instanceOfSubPermissions(value) {
     if (!('subsLimits' in value) || value['subsLimits'] === undefined)
         return false;
     if (!('topics' in value) || value['topics'] === undefined)
         return false;
     return true;
 }
-export function SubPermissionsFromJSON(json) {
+exports.instanceOfSubPermissions = instanceOfSubPermissions;
+function SubPermissionsFromJSON(json) {
     return SubPermissionsFromJSONTyped(json, false);
 }
-export function SubPermissionsFromJSONTyped(json, ignoreDiscriminator) {
+exports.SubPermissionsFromJSON = SubPermissionsFromJSON;
+function SubPermissionsFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
     }
     return {
-        'subsLimits': (json['subs_limits'].map(LimitByKeyFromJSON)),
-        'topics': (json['topics'].map(SubPermissionFromJSON)),
+        'subsLimits': (json['subs_limits'].map(LimitByKey_1.LimitByKeyFromJSON)),
+        'topics': (json['topics'].map(SubPermission_1.SubPermissionFromJSON)),
     };
 }
-export function SubPermissionsToJSON(value) {
+exports.SubPermissionsFromJSONTyped = SubPermissionsFromJSONTyped;
+function SubPermissionsToJSON(value) {
     if (value == null) {
         return value;
     }
     return {
-        'subs_limits': (value['subsLimits'].map(LimitByKeyToJSON)),
-        'topics': (value['topics'].map(SubPermissionToJSON)),
+        'subs_limits': (value['subsLimits'].map(LimitByKey_1.LimitByKeyToJSON)),
+        'topics': (value['topics'].map(SubPermission_1.SubPermissionToJSON)),
     };
 }
+exports.SubPermissionsToJSON = SubPermissionsToJSON;
 //# sourceMappingURL=SubPermissions.js.map

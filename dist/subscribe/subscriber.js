@@ -1,12 +1,15 @@
-import { MPSCStream } from "../sync/mpsc";
-import { SubError } from "../transport/commands";
-export class Subscriber {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Subscriber = void 0;
+const mpsc_1 = require("../sync/mpsc");
+const commands_1 = require("../transport/commands");
+class Subscriber {
     constructor(transport) {
         this.transport = transport;
     }
     async subscribe(topic, options) {
         let subId = null;
-        const stream = new MPSCStream(() => {
+        const stream = new mpsc_1.MPSCStream(() => {
             if (subId !== null) {
                 this.transport.unsubscribe({
                     cmd: "unsubscribe",
@@ -25,7 +28,7 @@ export class Subscriber {
                 offset: options?.offset,
                 recoverable: options?.recoverable,
                 suback: (result) => {
-                    if (result instanceof SubError) {
+                    if (result instanceof commands_1.SubError) {
                         resolve(result);
                     }
                     else {
@@ -40,4 +43,5 @@ export class Subscriber {
         });
     }
 }
+exports.Subscriber = Subscriber;
 //# sourceMappingURL=subscriber.js.map

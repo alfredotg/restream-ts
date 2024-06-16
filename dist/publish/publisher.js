@@ -1,5 +1,8 @@
-import { PubError } from "../transport/commands";
-export class Publisher {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Publisher = void 0;
+const commands_1 = require("../transport/commands");
+class Publisher {
     constructor(transport) {
         this.transport = transport;
     }
@@ -20,8 +23,9 @@ export class Publisher {
             await promise;
         }
         catch (error) {
-            return new PubError(new Error("" + error));
+            return new commands_1.PubError(new Error("" + error));
         }
     }
 }
+exports.Publisher = Publisher;
 //# sourceMappingURL=publisher.js.map
