@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
-  "module": "./dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
@@ -42,5 +41,8 @@
     "denque": "^2.1.0",
     "mqtt": "^5.5.0",
     "tslog": "^4.9.2"
-  }
+  },
+  "files": [
+    "/dist"
+  ]
 }
