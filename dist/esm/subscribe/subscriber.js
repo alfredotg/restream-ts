@@ -1,5 +1,5 @@
 import { MPSCStream } from "../sync/mpsc";
-import { SubError } from "../transport/commands";
+import { CreateSubscriptionError, } from "../transport/commands";
 export class Subscriber {
     constructor(transport) {
         this.transport = transport;
@@ -25,7 +25,7 @@ export class Subscriber {
                 offset: options?.offset,
                 recoverable: options?.recoverable,
                 suback: (result) => {
-                    if (result instanceof SubError) {
+                    if (result instanceof CreateSubscriptionError) {
                         resolve(result);
                     }
                     else {

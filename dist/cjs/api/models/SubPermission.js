@@ -1,16 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubPermissionToJSON = exports.SubPermissionFromJSONTyped = exports.SubPermissionFromJSON = exports.instanceOfSubPermission = void 0;
+exports.instanceOfSubPermission = instanceOfSubPermission;
+exports.SubPermissionFromJSON = SubPermissionFromJSON;
+exports.SubPermissionFromJSONTyped = SubPermissionFromJSONTyped;
+exports.SubPermissionToJSON = SubPermissionToJSON;
 function instanceOfSubPermission(value) {
     if (!('topic' in value) || value['topic'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfSubPermission = instanceOfSubPermission;
 function SubPermissionFromJSON(json) {
     return SubPermissionFromJSONTyped(json, false);
 }
-exports.SubPermissionFromJSON = SubPermissionFromJSON;
 function SubPermissionFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
@@ -19,7 +20,6 @@ function SubPermissionFromJSONTyped(json, ignoreDiscriminator) {
         'topic': json['topic'],
     };
 }
-exports.SubPermissionFromJSONTyped = SubPermissionFromJSONTyped;
 function SubPermissionToJSON(value) {
     if (value == null) {
         return value;
@@ -28,5 +28,4 @@ function SubPermissionToJSON(value) {
         'topic': value['topic'],
     };
 }
-exports.SubPermissionToJSON = SubPermissionToJSON;
 //# sourceMappingURL=SubPermission.js.map

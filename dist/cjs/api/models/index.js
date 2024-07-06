@@ -18,10 +18,12 @@ __exportStar(require("./CreateSubscriptionErrorReason"), exports);
 __exportStar(require("./JwtToken"), exports);
 __exportStar(require("./LimitByKey"), exports);
 __exportStar(require("./ModulesClaims"), exports);
+__exportStar(require("./MqttProperties"), exports);
 __exportStar(require("./PubPermission"), exports);
 __exportStar(require("./PubPermissions"), exports);
 __exportStar(require("./RpcPermission"), exports);
 __exportStar(require("./RpcPermissions"), exports);
 __exportStar(require("./SubPermission"), exports);
 __exportStar(require("./SubPermissions"), exports);
+__exportStar(require("./SubscriptionErrorReason"), exports);
 //# sourceMappingURL=index.js.map

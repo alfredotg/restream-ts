@@ -10,6 +10,7 @@ export type MqttWsTransportOptions = {
     debug?: boolean;
     reconnectStrategy?: IReconnectStrategy;
     tokenRefresh?: () => Promise<string>;
+    keepaliveSeconds?: number;
 };
 export declare class MqttWsTransport implements ITransport {
     private client;
@@ -27,10 +28,10 @@ export declare class MqttWsTransport implements ITransport {
     publish(command: Publish): void;
     close(): Promise<void>;
     state(): CancelableStream<ConnectionState>;
-    sub_count(): number;
+    subCount(): number;
     subscribe(command: Subscribe): number;
     unsubscribe(command: Unsubscribe): void;
-    call_rpc(command: CallRpc): void;
+    callRpc(command: CallRpc): void;
     private onRpcError;
     private onRpcResponse;
     private onConnect;

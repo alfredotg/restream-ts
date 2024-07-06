@@ -1,12 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CallRpcError = exports.PubError = exports.SubErrorResponse = exports.SubError = void 0;
-class SubError {
+exports.CallRpcError = exports.PubError = exports.SubError = exports.SubErrorResponse = exports.CreateSubscriptionError = exports.CreateSubscriptionErrorResponse = void 0;
+class CreateSubscriptionErrorResponse {
+    constructor(reason_code, message) {
+        this.reason_code = reason_code;
+        this.message = message;
+    }
+}
+exports.CreateSubscriptionErrorResponse = CreateSubscriptionErrorResponse;
+class CreateSubscriptionError {
     constructor(error) {
         this.error = error;
     }
 }
-exports.SubError = SubError;
+exports.CreateSubscriptionError = CreateSubscriptionError;
 class SubErrorResponse {
     constructor(reason_code, message) {
         this.reason_code = reason_code;
@@ -14,6 +21,12 @@ class SubErrorResponse {
     }
 }
 exports.SubErrorResponse = SubErrorResponse;
+class SubError {
+    constructor(error) {
+        this.error = error;
+    }
+}
+exports.SubError = SubError;
 class PubError {
     constructor(error) {
         this.error = error;

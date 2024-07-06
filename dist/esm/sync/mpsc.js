@@ -23,7 +23,7 @@ export class MPSCStream {
                 }
             }
             finally {
-                self.call_on_cancel();
+                self.callOnCancel();
             }
         })(this);
     }
@@ -45,9 +45,12 @@ export class MPSCStream {
         }
         this.notify = null;
         notify.notify();
-        this.call_on_cancel();
+        this.callOnCancel();
     }
-    call_on_cancel() {
+    isClosed() {
+        return this.notify === null;
+    }
+    callOnCancel() {
         const on_cancel = this.on_cancel;
         this.on_cancel = undefined;
         if (on_cancel) {

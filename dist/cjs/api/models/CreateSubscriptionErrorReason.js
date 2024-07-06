@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateSubscriptionErrorReasonToJSON = exports.CreateSubscriptionErrorReasonFromJSONTyped = exports.CreateSubscriptionErrorReasonFromJSON = exports.instanceOfCreateSubscriptionErrorReason = exports.CreateSubscriptionErrorReason = void 0;
+exports.CreateSubscriptionErrorReason = void 0;
+exports.instanceOfCreateSubscriptionErrorReason = instanceOfCreateSubscriptionErrorReason;
+exports.CreateSubscriptionErrorReasonFromJSON = CreateSubscriptionErrorReasonFromJSON;
+exports.CreateSubscriptionErrorReasonFromJSONTyped = CreateSubscriptionErrorReasonFromJSONTyped;
+exports.CreateSubscriptionErrorReasonToJSON = CreateSubscriptionErrorReasonToJSON;
 exports.CreateSubscriptionErrorReason = {
     LimitExceeded: "limit_exceeded",
     Unauthorized: "unauthorized",
@@ -20,17 +24,13 @@ function instanceOfCreateSubscriptionErrorReason(value) {
     }
     return false;
 }
-exports.instanceOfCreateSubscriptionErrorReason = instanceOfCreateSubscriptionErrorReason;
 function CreateSubscriptionErrorReasonFromJSON(json) {
     return CreateSubscriptionErrorReasonFromJSONTyped(json, false);
 }
-exports.CreateSubscriptionErrorReasonFromJSON = CreateSubscriptionErrorReasonFromJSON;
 function CreateSubscriptionErrorReasonFromJSONTyped(json, ignoreDiscriminator) {
     return json;
 }
-exports.CreateSubscriptionErrorReasonFromJSONTyped = CreateSubscriptionErrorReasonFromJSONTyped;
 function CreateSubscriptionErrorReasonToJSON(value) {
     return value;
 }
-exports.CreateSubscriptionErrorReasonToJSON = CreateSubscriptionErrorReasonToJSON;
 //# sourceMappingURL=CreateSubscriptionErrorReason.js.map

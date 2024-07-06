@@ -9,14 +9,8 @@ export declare class OnceConnectStrategy implements IReconnectStrategy {
     run(state: CancelableStream<ConnectionState>, connect: ConnectCallback): Promise<void>;
 }
 export declare class ExponentialReconnectStrategy implements IReconnectStrategy {
-    private readonly maxDelay;
-    private readonly maxRetries;
-    private readonly backoff;
-    private retries;
-    private wakeUp;
-    private connectedAt;
-    clock: IClockInterface;
-    constructor(backoffMs?: number, maxDelayMs?: number, maxRetries?: number);
+    private readonly delay;
+    constructor(backoffMs?: number, maxDelayMs?: number, maxRetries?: number, clock?: IClockInterface);
     run(state: CancelableStream<ConnectionState>, connect: ConnectCallback): Promise<void>;
     reset(): void;
 }

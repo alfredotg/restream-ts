@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JwtTokenToJSON = exports.JwtTokenFromJSONTyped = exports.JwtTokenFromJSON = exports.instanceOfJwtToken = void 0;
+exports.instanceOfJwtToken = instanceOfJwtToken;
+exports.JwtTokenFromJSON = JwtTokenFromJSON;
+exports.JwtTokenFromJSONTyped = JwtTokenFromJSONTyped;
+exports.JwtTokenToJSON = JwtTokenToJSON;
 const RpcPermissions_1 = require("./RpcPermissions");
 const LimitByKey_1 = require("./LimitByKey");
 const PubPermissions_1 = require("./PubPermissions");
@@ -12,11 +15,9 @@ function instanceOfJwtToken(value) {
         return false;
     return true;
 }
-exports.instanceOfJwtToken = instanceOfJwtToken;
 function JwtTokenFromJSON(json) {
     return JwtTokenFromJSONTyped(json, false);
 }
-exports.JwtTokenFromJSON = JwtTokenFromJSON;
 function JwtTokenFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
@@ -30,7 +31,6 @@ function JwtTokenFromJSONTyped(json, ignoreDiscriminator) {
         'exp': json['exp'],
     };
 }
-exports.JwtTokenFromJSONTyped = JwtTokenFromJSONTyped;
 function JwtTokenToJSON(value) {
     if (value == null) {
         return value;
@@ -44,5 +44,4 @@ function JwtTokenToJSON(value) {
         'exp': value['exp'],
     };
 }
-exports.JwtTokenToJSON = JwtTokenToJSON;
 //# sourceMappingURL=JwtToken.js.map

@@ -1,4 +1,10 @@
-export class SubError {
+export class CreateSubscriptionErrorResponse {
+    constructor(reason_code, message) {
+        this.reason_code = reason_code;
+        this.message = message;
+    }
+}
+export class CreateSubscriptionError {
     constructor(error) {
         this.error = error;
     }
@@ -7,6 +13,11 @@ export class SubErrorResponse {
     constructor(reason_code, message) {
         this.reason_code = reason_code;
         this.message = message;
+    }
+}
+export class SubError {
+    constructor(error) {
+        this.error = error;
     }
 }
 export class PubError {

@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ModulesClaimsToJSON = exports.ModulesClaimsFromJSONTyped = exports.ModulesClaimsFromJSON = exports.instanceOfModulesClaims = void 0;
+exports.instanceOfModulesClaims = instanceOfModulesClaims;
+exports.ModulesClaimsFromJSON = ModulesClaimsFromJSON;
+exports.ModulesClaimsFromJSONTyped = ModulesClaimsFromJSONTyped;
+exports.ModulesClaimsToJSON = ModulesClaimsToJSON;
 const RpcPermissions_1 = require("./RpcPermissions");
 const LimitByKey_1 = require("./LimitByKey");
 const PubPermissions_1 = require("./PubPermissions");
@@ -8,11 +11,9 @@ const SubPermissions_1 = require("./SubPermissions");
 function instanceOfModulesClaims(value) {
     return true;
 }
-exports.instanceOfModulesClaims = instanceOfModulesClaims;
 function ModulesClaimsFromJSON(json) {
     return ModulesClaimsFromJSONTyped(json, false);
 }
-exports.ModulesClaimsFromJSON = ModulesClaimsFromJSON;
 function ModulesClaimsFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
@@ -24,7 +25,6 @@ function ModulesClaimsFromJSONTyped(json, ignoreDiscriminator) {
         'subscribe': json['subscribe'] == null ? undefined : (0, SubPermissions_1.SubPermissionsFromJSON)(json['subscribe']),
     };
 }
-exports.ModulesClaimsFromJSONTyped = ModulesClaimsFromJSONTyped;
 function ModulesClaimsToJSON(value) {
     if (value == null) {
         return value;
@@ -36,5 +36,4 @@ function ModulesClaimsToJSON(value) {
         'subscribe': (0, SubPermissions_1.SubPermissionsToJSON)(value['subscribe']),
     };
 }
-exports.ModulesClaimsToJSON = ModulesClaimsToJSON;
 //# sourceMappingURL=ModulesClaims.js.map

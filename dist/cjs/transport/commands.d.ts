@@ -1,11 +1,10 @@
-/// <reference types="node" />
-import { CreateSubscriptionErrorReason } from "../api";
+import { CreateSubscriptionErrorReason, SubscriptionErrorReason } from "../api";
 export type Subscribe = {
     cmd: "subscribe";
     topic: string;
     offset?: number;
     recoverable?: boolean;
-    suback?: (result: SubAck | SubError) => void;
+    suback?: (result: SubAck | CreateSubscriptionError) => void;
     callback: (message: IncomingMessage | SubError) => void;
 };
 export type SubAck = {
@@ -17,19 +16,27 @@ export type Unsubscribe = {
 };
 export type IncomingMessage = {
     cmd: "message";
-    sub_id: number;
     topic: string;
     offset: number;
     message: Buffer;
 };
-export declare class SubError {
-    error: SubErrorResponse | Error;
-    constructor(error: SubErrorResponse | Error);
-}
-export declare class SubErrorResponse {
+export declare class CreateSubscriptionErrorResponse {
     reason_code: CreateSubscriptionErrorReason;
     message: string;
     constructor(reason_code: CreateSubscriptionErrorReason, message: string);
+}
+export declare class CreateSubscriptionError {
+    error: CreateSubscriptionErrorResponse | Error;
+    constructor(error: CreateSubscriptionErrorResponse | Error);
+}
+export declare class SubErrorResponse {
+    reason_code: SubscriptionErrorReason;
+    message: string;
+    constructor(reason_code: SubscriptionErrorReason, message: string);
+}
+export declare class SubError {
+    error: SubErrorResponse | Error;
+    constructor(error: SubErrorResponse | Error);
 }
 export type Publish = {
     cmd: "publish";

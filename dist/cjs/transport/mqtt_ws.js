@@ -9,6 +9,7 @@ const commands_1 = require("./commands");
 const watch_1 = require("../sync/watch");
 const reconnect_1 = require("./reconnect");
 const api_1 = require("../api");
+const SYS_ERROR_TOPIC = "$RS/error";
 const RPC_RESPONSE_TOPIC = "$RS/rpc/response";
 const SUB_ID_PROPERTY_NAME = "sub_id";
 const OFFSET_PROPERTY_NAME = "offset";
@@ -32,6 +33,7 @@ class MqttWsTransport {
             manualConnect: true,
             protocolVersion: 5,
             reconnectPeriod: 0,
+            keepalive: options.keepaliveSeconds || 15,
             transformWsUrl: (url, options) => {
                 if (this.token !== null) {
                     options.username = this.token;
@@ -157,7 +159,7 @@ class MqttWsTransport {
     state() {
         return this.stateBroadcast.subscribe();
     }
-    sub_count() {
+    subCount() {
         return this.subscriptions.size;
     }
     subscribe(command) {
@@ -199,7 +201,7 @@ class MqttWsTransport {
                 this.logger?.error("Subscribe error", err, reasonResponse);
                 this.subscriptions.delete(subId);
                 this.callback(() => command.suback &&
-                    command.suback(new commands_1.SubError(reasonResponse || err)));
+                    command.suback(new commands_1.CreateSubscriptionError(reasonResponse || err)));
             }
             else {
                 this.callback(() => command.suback &&
@@ -230,7 +232,7 @@ class MqttWsTransport {
             }
         });
     }
-    call_rpc(command) {
+    callRpc(command) {
         const rpc_id = this.rpcId++;
         this.rpcCallbacks.set(rpc_id, command.callback);
         const opts = {
@@ -291,7 +293,9 @@ class MqttWsTransport {
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();
         for (const sub of subscriptions.values()) {
-            this.callback(() => sub.callback(new commands_1.SubError(new Error("Disconnected"))));
+            this.callback(() => {
+                sub.callback(new commands_1.SubError(new Error("Disconnected")));
+            });
         }
         const rpcCallbacks = this.rpcCallbacks;
         this.rpcCallbacks = new Map();
@@ -321,11 +325,11 @@ class MqttWsTransport {
             this.logger?.error(maybe_message);
             return;
         }
-        const message = maybe_message;
-        const sub = this.subscriptions.get(message.sub_id);
+        const [sub_id, message] = maybe_message;
+        const sub = this.subscriptions.get(sub_id);
         if (sub !== undefined) {
             if (!this.callback(() => sub.callback(message))) {
-                this.subscriptions.delete(message.sub_id);
+                this.unsubscribe({ cmd: "unsubscribe", sub_id });
             }
         }
     }
@@ -349,6 +353,18 @@ function parseMessage(topic, message, packet) {
     if (sub_id === undefined || isNaN(sub_id)) {
         return new Error("Missing subscription identifier");
     }
+    if (topic === SYS_ERROR_TOPIC) {
+        let reason = api_1.SubscriptionErrorReason.Unspecified;
+        if (packet.properties &&
+            packet.properties.userProperties &&
+            api_1.MqttProperties.ErrorReason in packet.properties.userProperties) {
+            reason = (0, api_1.SubscriptionErrorReasonFromJSON)(packet.properties.userProperties[api_1.MqttProperties.ErrorReason]);
+        }
+        return [
+            sub_id,
+            new commands_1.SubError(new commands_1.SubErrorResponse(reason, message.toString())),
+        ];
+    }
     let offsetProp = packet.properties?.userProperties?.offset;
     if (Array.isArray(offsetProp)) {
         offsetProp = offsetProp.shift();
@@ -357,20 +373,22 @@ function parseMessage(topic, message, packet) {
     if (offset === undefined || isNaN(offset)) {
         return new Error("Missing offset");
     }
-    return {
-        cmd: "message",
+    return [
         sub_id,
-        topic,
-        offset,
-        message,
-    };
+        {
+            cmd: "message",
+            topic,
+            offset,
+            message,
+        },
+    ];
 }
 function parseReasonString(reasonString) {
     const parts = reasonString.split(" ");
     const code = parts.shift();
     const message = parts.join(" ");
     if ((0, api_1.instanceOfCreateSubscriptionErrorReason)(code)) {
-        return new commands_1.SubErrorResponse((0, api_1.CreateSubscriptionErrorReasonFromJSON)(code), message);
+        return new commands_1.CreateSubscriptionErrorResponse((0, api_1.CreateSubscriptionErrorReasonFromJSON)(code), message);
     }
     return null;
 }

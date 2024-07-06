@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubPermissionsToJSON = exports.SubPermissionsFromJSONTyped = exports.SubPermissionsFromJSON = exports.instanceOfSubPermissions = void 0;
+exports.instanceOfSubPermissions = instanceOfSubPermissions;
+exports.SubPermissionsFromJSON = SubPermissionsFromJSON;
+exports.SubPermissionsFromJSONTyped = SubPermissionsFromJSONTyped;
+exports.SubPermissionsToJSON = SubPermissionsToJSON;
 const SubPermission_1 = require("./SubPermission");
 const LimitByKey_1 = require("./LimitByKey");
 function instanceOfSubPermissions(value) {
@@ -10,11 +13,9 @@ function instanceOfSubPermissions(value) {
         return false;
     return true;
 }
-exports.instanceOfSubPermissions = instanceOfSubPermissions;
 function SubPermissionsFromJSON(json) {
     return SubPermissionsFromJSONTyped(json, false);
 }
-exports.SubPermissionsFromJSON = SubPermissionsFromJSON;
 function SubPermissionsFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
@@ -24,7 +25,6 @@ function SubPermissionsFromJSONTyped(json, ignoreDiscriminator) {
         'topics': (json['topics'].map(SubPermission_1.SubPermissionFromJSON)),
     };
 }
-exports.SubPermissionsFromJSONTyped = SubPermissionsFromJSONTyped;
 function SubPermissionsToJSON(value) {
     if (value == null) {
         return value;
@@ -34,5 +34,4 @@ function SubPermissionsToJSON(value) {
         'topics': (value['topics'].map(SubPermission_1.SubPermissionToJSON)),
     };
 }
-exports.SubPermissionsToJSON = SubPermissionsToJSON;
 //# sourceMappingURL=SubPermissions.js.map

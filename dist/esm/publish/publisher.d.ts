@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { PubError } from "../transport/commands";
 import { ITransport } from "../transport/transport";
 interface IPublishOptions {

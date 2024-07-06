@@ -13,7 +13,7 @@ export class JsonRpc {
                     resolve(response);
                 },
             };
-            this.transport.call_rpc(cmd);
+            this.transport.callRpc(cmd);
         });
         try {
             const data = await promise;

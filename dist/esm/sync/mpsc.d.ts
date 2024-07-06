@@ -8,5 +8,6 @@ export declare class MPSCStream<T> implements CancelableStream<T> {
     clear(): void;
     push(value: T): boolean;
     cancel(): void;
-    private call_on_cancel;
+    isClosed(): boolean;
+    private callOnCancel;
 }

@@ -1,16 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PubPermissionToJSON = exports.PubPermissionFromJSONTyped = exports.PubPermissionFromJSON = exports.instanceOfPubPermission = void 0;
+exports.instanceOfPubPermission = instanceOfPubPermission;
+exports.PubPermissionFromJSON = PubPermissionFromJSON;
+exports.PubPermissionFromJSONTyped = PubPermissionFromJSONTyped;
+exports.PubPermissionToJSON = PubPermissionToJSON;
 function instanceOfPubPermission(value) {
     if (!('topic' in value) || value['topic'] === undefined)
         return false;
     return true;
 }
-exports.instanceOfPubPermission = instanceOfPubPermission;
 function PubPermissionFromJSON(json) {
     return PubPermissionFromJSONTyped(json, false);
 }
-exports.PubPermissionFromJSON = PubPermissionFromJSON;
 function PubPermissionFromJSONTyped(json, ignoreDiscriminator) {
     if (json == null) {
         return json;
@@ -19,7 +20,6 @@ function PubPermissionFromJSONTyped(json, ignoreDiscriminator) {
         'topic': json['topic'],
     };
 }
-exports.PubPermissionFromJSONTyped = PubPermissionFromJSONTyped;
 function PubPermissionToJSON(value) {
     if (value == null) {
         return value;
@@ -28,5 +28,4 @@ function PubPermissionToJSON(value) {
         'topic': value['topic'],
     };
 }
-exports.PubPermissionToJSON = PubPermissionToJSON;
 //# sourceMappingURL=PubPermission.js.map

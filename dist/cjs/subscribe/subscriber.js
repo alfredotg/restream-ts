@@ -28,7 +28,7 @@ class Subscriber {
                 offset: options?.offset,
                 recoverable: options?.recoverable,
                 suback: (result) => {
-                    if (result instanceof commands_1.SubError) {
+                    if (result instanceof commands_1.CreateSubscriptionError) {
                         resolve(result);
                     }
                     else {

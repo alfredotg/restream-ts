@@ -23,13 +23,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.api = exports.Publisher = exports.OnceConnectStrategy = exports.ExponentialReconnectStrategy = exports.SubErrorResponse = exports.SubError = exports.Subscriber = exports.JsonRpc = exports.MqttWsTransport = void 0;
+exports.api = exports.Publisher = exports.OnceConnectStrategy = exports.ExponentialReconnectStrategy = exports.SubErrorResponse = exports.SubError = exports.RecoverableStream = exports.Subscriber = exports.JsonRpc = exports.MqttWsTransport = void 0;
 var mqtt_ws_1 = require("./transport/mqtt_ws");
 Object.defineProperty(exports, "MqttWsTransport", { enumerable: true, get: function () { return mqtt_ws_1.MqttWsTransport; } });
 var index_1 = require("./rpc/index");
 Object.defineProperty(exports, "JsonRpc", { enumerable: true, get: function () { return index_1.JsonRpc; } });
 var subscriber_1 = require("./subscribe/subscriber");
 Object.defineProperty(exports, "Subscriber", { enumerable: true, get: function () { return subscriber_1.Subscriber; } });
+var recoverable_stream_1 = require("./subscribe/recoverable_stream");
+Object.defineProperty(exports, "RecoverableStream", { enumerable: true, get: function () { return recoverable_stream_1.RecoverableStream; } });
 const api = __importStar(require("./api/index"));
 exports.api = api;
 var commands_1 = require("./transport/commands");

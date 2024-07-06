@@ -1,4 +1,5 @@
 import { Clock } from "../time/clock";
+import { ExponentialDelay } from "../time/delay";
 export class OnceConnectStrategy {
     async run(state, connect) {
         for await (const value of state.stream) {
@@ -11,19 +12,13 @@ export class OnceConnectStrategy {
     }
 }
 export class ExponentialReconnectStrategy {
-    constructor(backoffMs = 600, maxDelayMs = -1, maxRetries = -1) {
-        this.retries = 0;
-        this.wakeUp = () => { };
-        this.connectedAt = -1;
-        this.clock = new Clock();
-        this.maxDelay = maxDelayMs;
-        this.maxRetries = maxRetries;
-        this.backoff = backoffMs;
+    constructor(backoffMs = 600, maxDelayMs = -1, maxRetries = -1, clock = new Clock()) {
+        this.delay = new ExponentialDelay(backoffMs, maxDelayMs, maxRetries, clock);
     }
     async run(state, connect) {
         for await (const value of state.stream) {
             if (value.cmd === "connected") {
-                this.connectedAt = this.clock.now();
+                this.delay.success();
                 continue;
             }
             if (value.cmd === "closed") {
@@ -32,36 +27,19 @@ export class ExponentialReconnectStrategy {
             if (value.cmd !== "disconnected") {
                 continue;
             }
-            if (this.connectedAt >= 0) {
-                if (this.clock.now() - this.connectedAt > this.backoff) {
-                    this.retries = 0;
-                }
-                else {
-                    this.clock.sleep(this.backoff);
-                }
-            }
-            while (this.retries < this.maxRetries || this.maxRetries < 0) {
+            while (await this.delay.retry()) {
                 try {
                     await connect();
                     break;
                 }
                 catch (e) {
-                    this.retries++;
-                    let delay = this.backoff * Math.pow(2, this.retries);
-                    if (this.maxDelay > 0) {
-                        delay = Math.min(this.maxDelay, delay);
-                    }
-                    await new Promise((resolve) => {
-                        this.wakeUp = resolve;
-                        this.clock.sleep(delay).then(resolve);
-                    });
+                    await this.delay.fail();
                 }
             }
         }
     }
     reset() {
-        this.retries = 0;
-        this.wakeUp();
+        this.delay.reset();
     }
 }
 //# sourceMappingURL=reconnect.js.map
