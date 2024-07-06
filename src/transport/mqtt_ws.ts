@@ -33,6 +33,7 @@ export type MqttWsTransportOptions = {
     debug?: boolean;
     reconnectStrategy?: IReconnectStrategy;
     tokenRefresh?: () => Promise<string>;
+    keepaliveSeconds?: number;
 };
 
 const SYS_ERROR_TOPIC = "$RS/error";
@@ -72,6 +73,7 @@ export class MqttWsTransport implements ITransport {
             manualConnect: true,
             protocolVersion: 5,
             reconnectPeriod: 0,
+            keepalive: options.keepaliveSeconds || 15,
             transformWsUrl: (url, options) => {
                 if (this.token !== null) {
                     options.username = this.token;
