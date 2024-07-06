@@ -29,7 +29,7 @@ export class MPSCStream<T> implements CancelableStream<T> {
                     }
                 }
             } finally {
-                self.call_on_cancel();
+                self.callOnCancel();
             }
         })(this);
     }
@@ -54,10 +54,14 @@ export class MPSCStream<T> implements CancelableStream<T> {
         }
         this.notify = null;
         notify.notify();
-        this.call_on_cancel();
+        this.callOnCancel();
     }
 
-    private call_on_cancel(): void {
+    public isClosed(): boolean {
+        return this.notify === null;
+    }
+
+    private callOnCancel(): void {
         const on_cancel = this.on_cancel;
         this.on_cancel = undefined;
         if (on_cancel) {

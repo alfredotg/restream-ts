@@ -6,10 +6,10 @@ export interface ITransport {
     waitConnected(): Promise<void>;
     state(): CancelableStream<ConnectionState>;
     close(): void;
-    sub_count(): number;
+    subCount(): number;
     subscribe(command: Subscribe): number;
     unsubscribe(command: Unsubscribe): void;
-    call_rpc(command: CallRpc): void;
+    callRpc(command: CallRpc): void;
     publish(command: Publish): void;
 }
 

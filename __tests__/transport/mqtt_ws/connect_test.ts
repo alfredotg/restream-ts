@@ -14,6 +14,11 @@ import {
     get_server_url,
     get_server_url_with_auth,
 } from "./common";
+import {
+    CreateSubscriptionError,
+    CreateSubscriptionErrorResponse,
+} from "../../../src/transport/commands";
+import { CreateSubscriptionErrorReason } from "../../../src/api";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -48,7 +53,7 @@ test("subscribe on closed", async () => {
         immediately: true,
     });
 
-    assert(stream instanceof SubError);
+    assert(stream instanceof CreateSubscriptionError);
 });
 
 test("connect denied", async () => {
@@ -147,8 +152,9 @@ test("subscribe with permission", async () => {
         immediately: true,
     });
 
-    expect(stream instanceof SubError).toBe(true);
-    const response = (stream as SubError).error as SubErrorResponse;
+    expect(stream instanceof CreateSubscriptionError).toBe(true);
+    const response = (stream as CreateSubscriptionError)
+        .error as CreateSubscriptionErrorResponse;
     expect(response.reason_code).toBe(
         api.CreateSubscriptionErrorReason.Unauthorized,
     );

@@ -11,6 +11,8 @@ import {
     PubError,
     SubError,
     SubErrorResponse,
+    CreateSubscriptionError,
+    CreateSubscriptionErrorResponse,
 } from "./commands";
 import { ConnectionState } from "./connection_state";
 import { CancelableStream } from "@/sync/types";
@@ -20,6 +22,9 @@ import { IReconnectStrategy, OnceConnectStrategy } from "./reconnect";
 import {
     CreateSubscriptionErrorReasonFromJSON,
     instanceOfCreateSubscriptionErrorReason,
+    MqttProperties,
+    SubscriptionErrorReason,
+    SubscriptionErrorReasonFromJSON,
 } from "@/api";
 
 export type MqttWsTransportOptions = {
@@ -30,6 +35,7 @@ export type MqttWsTransportOptions = {
     tokenRefresh?: () => Promise<string>;
 };
 
+const SYS_ERROR_TOPIC = "$RS/error";
 const RPC_RESPONSE_TOPIC = "$RS/rpc/response";
 const SUB_ID_PROPERTY_NAME = "sub_id";
 const OFFSET_PROPERTY_NAME = "offset";
@@ -49,7 +55,8 @@ export class MqttWsTransport implements ITransport {
     > = new Map();
     private closed = false;
     private token: string | null = null;
-    private subErrorReasons: Map<number, SubErrorResponse> = new Map();
+    private subErrorReasons: Map<number, CreateSubscriptionErrorResponse> =
+        new Map();
 
     constructor(options: MqttWsTransportOptions) {
         this.logger = options.logger;
@@ -229,7 +236,7 @@ export class MqttWsTransport implements ITransport {
         return this.stateBroadcast.subscribe();
     }
 
-    public sub_count(): number {
+    public subCount(): number {
         return this.subscriptions.size;
     }
 
@@ -287,7 +294,9 @@ export class MqttWsTransport implements ITransport {
                 this.callback(
                     () =>
                         command.suback &&
-                        command.suback(new SubError(reasonResponse || err)),
+                        command.suback(
+                            new CreateSubscriptionError(reasonResponse || err),
+                        ),
                 );
             } else {
                 this.callback(
@@ -326,7 +335,7 @@ export class MqttWsTransport implements ITransport {
         });
     }
 
-    public call_rpc(command: CallRpc): void {
+    public callRpc(command: CallRpc): void {
         const rpc_id = this.rpcId++;
         this.rpcCallbacks.set(rpc_id, command.callback);
 
@@ -412,9 +421,9 @@ export class MqttWsTransport implements ITransport {
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();
         for (const sub of subscriptions.values()) {
-            this.callback(() =>
-                sub.callback(new SubError(new Error("Disconnected"))),
-            );
+            this.callback(() => {
+                sub.callback(new SubError(new Error("Disconnected")));
+            });
         }
 
         const rpcCallbacks = this.rpcCallbacks;
@@ -456,11 +465,11 @@ export class MqttWsTransport implements ITransport {
             this.logger?.error(maybe_message);
             return;
         }
-        const message = maybe_message;
-        const sub = this.subscriptions.get(message.sub_id);
+        const [sub_id, message] = maybe_message;
+        const sub = this.subscriptions.get(sub_id);
         if (sub !== undefined) {
             if (!this.callback(() => sub.callback(message))) {
-                this.subscriptions.delete(message.sub_id);
+                this.unsubscribe({ cmd: "unsubscribe", sub_id });
             }
         }
     }
@@ -480,13 +489,32 @@ function parseMessage(
     topic: string,
     message: Buffer,
     packet: mqtt.IPublishPacket,
-): IncomingMessage | Error {
+): [number, IncomingMessage | SubError] | Error {
     let sub_id = packet.properties?.subscriptionIdentifier;
     if (sub_id && Array.isArray(sub_id)) {
         sub_id = sub_id.shift();
     }
     if (sub_id === undefined || isNaN(sub_id)) {
         return new Error("Missing subscription identifier");
+    }
+
+    if (topic === SYS_ERROR_TOPIC) {
+        let reason: SubscriptionErrorReason =
+            SubscriptionErrorReason.Unspecified;
+        if (
+            packet.properties &&
+            packet.properties.userProperties &&
+            MqttProperties.ErrorReason in packet.properties.userProperties
+        ) {
+            reason = SubscriptionErrorReasonFromJSON(
+                packet.properties.userProperties[MqttProperties.ErrorReason],
+            );
+        }
+
+        return [
+            sub_id,
+            new SubError(new SubErrorResponse(reason, message.toString())),
+        ];
     }
 
     let offsetProp = packet.properties?.userProperties?.offset;
@@ -498,22 +526,26 @@ function parseMessage(
         return new Error("Missing offset");
     }
 
-    return {
-        cmd: "message",
+    return [
         sub_id,
-        topic,
-        offset,
-        message,
-    };
+        {
+            cmd: "message",
+            topic,
+            offset,
+            message,
+        },
+    ];
 }
 
-function parseReasonString(reasonString: string): SubErrorResponse | null {
+function parseReasonString(
+    reasonString: string,
+): CreateSubscriptionErrorResponse | null {
     const parts = reasonString.split(" ");
     const code = parts.shift();
     const message = parts.join(" ");
 
     if (instanceOfCreateSubscriptionErrorReason(code)) {
-        return new SubErrorResponse(
+        return new CreateSubscriptionErrorResponse(
             CreateSubscriptionErrorReasonFromJSON(code),
             message,
         );

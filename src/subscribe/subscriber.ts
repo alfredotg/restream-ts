@@ -1,6 +1,11 @@
 import { MPSCStream } from "../sync/mpsc";
 import { CancelableStream } from "../sync/types";
-import { IncomingMessage, SubError, Subscribe } from "../transport/commands";
+import {
+    CreateSubscriptionError,
+    IncomingMessage,
+    SubError,
+    Subscribe,
+} from "../transport/commands";
 import { ITransport } from "../transport/transport";
 
 export interface ISubscribeOptions {
@@ -15,7 +20,9 @@ export class Subscriber {
     public async subscribe(
         topic: string,
         options?: ISubscribeOptions,
-    ): Promise<CancelableStream<IncomingMessage | SubError> | SubError> {
+    ): Promise<
+        CancelableStream<IncomingMessage | SubError> | CreateSubscriptionError
+    > {
         let subId: number | null = null;
 
         const stream = new MPSCStream<IncomingMessage | SubError>(() => {
@@ -39,7 +46,7 @@ export class Subscriber {
                 offset: options?.offset,
                 recoverable: options?.recoverable,
                 suback: (result) => {
-                    if (result instanceof SubError) {
+                    if (result instanceof CreateSubscriptionError) {
                         resolve(result);
                     } else {
                         resolve(stream);

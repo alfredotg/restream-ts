@@ -11,6 +11,10 @@ import {
 import { Logger } from "tslog";
 import assert from "assert";
 import { create_stream, get_server_url } from "./common";
+import {
+    CreateSubscriptionError,
+    CreateSubscriptionErrorResponse,
+} from "../../../src/transport/commands";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -46,7 +50,7 @@ test("subscribe on closed", async () => {
         immediately: true,
     });
 
-    assert(stream instanceof SubError);
+    assert(stream instanceof CreateSubscriptionError);
 });
 
 describe("Subscriptions", () => {
@@ -76,8 +80,8 @@ describe("Subscriptions", () => {
         const subscriber = new Subscriber(transport);
 
         const sub = await subscriber.subscribe(stream_name + "/test1");
-        assert(!(sub instanceof SubError));
-        expect(transport.sub_count()).toBe(1);
+        assert(!(sub instanceof CreateSubscriptionError));
+        expect(transport.subCount()).toBe(1);
 
         const pubRes = await publisher.publish(
             stream_name + "/test1",
@@ -98,8 +102,8 @@ describe("Subscriptions", () => {
         const subscriber = new Subscriber(transport);
 
         const stream = await subscriber.subscribe(stream_name + "/test1");
-        assert(!(stream instanceof SubError));
-        expect(transport.sub_count()).toBe(1);
+        assert(!(stream instanceof CreateSubscriptionError));
+        expect(transport.subCount()).toBe(1);
 
         stream.cancel();
     });
@@ -122,7 +126,7 @@ describe("Subscriptions", () => {
         const sub = await subscriber.subscribe(stream_name + "/test1", {
             offset: 1,
         });
-        assert(!(sub instanceof SubError));
+        assert(!(sub instanceof CreateSubscriptionError));
 
         const first: IncomingMessage = (await sub.stream.next()).value;
         expect(first.cmd).toBe("message");
@@ -142,8 +146,8 @@ describe("Subscriptions", () => {
         const publisher = new Publisher(transport);
 
         const sub = await subscriber.subscribe(stream_name + "/test1");
-        assert(!(sub instanceof SubError));
-        expect(transport.sub_count()).toBe(1);
+        assert(!(sub instanceof CreateSubscriptionError));
+        expect(transport.subCount()).toBe(1);
 
         await publisher.publish(stream_name + "/test1", Buffer.from("message"));
 
@@ -151,7 +155,7 @@ describe("Subscriptions", () => {
             break;
         }
 
-        expect(transport.sub_count()).toBe(0);
+        expect(transport.subCount()).toBe(0);
 
         await transport.close();
     });
@@ -166,8 +170,8 @@ describe("Subscriptions", () => {
             stream_name + "/test/" + Math.random() * 10000,
             { recoverable: true },
         );
-        assert(!(sub instanceof SubError));
-        expect(transport.sub_count()).toBe(1);
+        assert(!(sub instanceof CreateSubscriptionError));
+        expect(transport.subCount()).toBe(1);
 
         const value: IncomingMessage = (await sub.stream.next()).value;
 
@@ -184,10 +188,29 @@ describe("Subscriptions", () => {
         const subscriber = new Subscriber(transport);
 
         const sub = await subscriber.subscribe(stream_name + "_NOT_FOUND/1111");
-        expect(sub).toBeInstanceOf(SubError);
-        const response = (sub as SubError).error as SubErrorResponse;
+        expect(sub).toBeInstanceOf(CreateSubscriptionError);
+        const response = (sub as CreateSubscriptionError)
+            .error as CreateSubscriptionErrorResponse;
         expect(response.reason_code).toBe(
             api.CreateSubscriptionErrorReason.NotFound,
+        );
+    });
+
+    test("lagging", async () => {
+        if (transport === null) {
+            assert.fail("transport is null");
+        }
+
+        const subscriber = new Subscriber(transport);
+        const sub = await subscriber.subscribe("rs_debug/error/lagging");
+
+        assert(!(sub instanceof CreateSubscriptionError));
+
+        const error: SubError = (await sub.stream.next()).value;
+
+        expect(error.error).toBeInstanceOf(SubErrorResponse);
+        expect((error.error as SubErrorResponse).reason_code).toBe(
+            api.SubscriptionErrorReason.Lagging,
         );
     });
 });

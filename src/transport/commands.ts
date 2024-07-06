@@ -1,11 +1,11 @@
-import { CreateSubscriptionErrorReason } from "@/api";
+import { CreateSubscriptionErrorReason, SubscriptionErrorReason } from "@/api";
 
 export type Subscribe = {
     cmd: "subscribe";
     topic: string;
     offset?: number;
     recoverable?: boolean;
-    suback?: (result: SubAck | SubError) => void;
+    suback?: (result: SubAck | CreateSubscriptionError) => void;
     callback: (message: IncomingMessage | SubError) => void;
 };
 
@@ -20,21 +20,31 @@ export type Unsubscribe = {
 
 export type IncomingMessage = {
     cmd: "message";
-    sub_id: number;
     topic: string;
     offset: number;
     message: Buffer;
 };
 
-export class SubError {
-    public constructor(public error: SubErrorResponse | Error) {}
-}
-
-export class SubErrorResponse {
+export class CreateSubscriptionErrorResponse {
     public constructor(
         public reason_code: CreateSubscriptionErrorReason,
         public message: string,
     ) {}
+}
+
+export class CreateSubscriptionError {
+    public constructor(public error: CreateSubscriptionErrorResponse | Error) {}
+}
+
+export class SubErrorResponse {
+    public constructor(
+        public reason_code: SubscriptionErrorReason,
+        public message: string,
+    ) {}
+}
+
+export class SubError {
+    public constructor(public error: SubErrorResponse | Error) {}
 }
 
 export type Publish = {

@@ -20,8 +20,8 @@ describe("Exponential Reconnect Strategy", () => {
             }
         };
 
-        const strategy = new ExponentialReconnectStrategy(1, 100, 3);
-        strategy.clock = new FrozenClock();
+        const clock = new FrozenClock();
+        const strategy = new ExponentialReconnectStrategy(1, 100, 3, clock);
 
         // act
         state.push({ cmd: "disconnected" });
@@ -31,7 +31,7 @@ describe("Exponential Reconnect Strategy", () => {
 
         // assert
         expect(connectCalls).toBe(3);
-        expect(strategy.clock.now()).toBe(2);
+        expect(clock.now()).toBe(2);
     });
 
     test("failed to connect", async () => {
@@ -48,8 +48,8 @@ describe("Exponential Reconnect Strategy", () => {
             throw new Error("failed to connect");
         };
 
-        const strategy = new ExponentialReconnectStrategy(1, 100, 3);
-        strategy.clock = new FrozenClock();
+        const clock = new FrozenClock();
+        const strategy = new ExponentialReconnectStrategy(1, 100, 3, clock);
 
         // act
         state.push({ cmd: "disconnected" });
@@ -59,6 +59,6 @@ describe("Exponential Reconnect Strategy", () => {
 
         // assert
         expect(connectCalls).toBe(3);
-        expect(strategy.clock.now()).toBe(6);
+        expect(clock.now()).toBe(6);
     });
 });

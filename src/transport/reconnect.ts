@@ -1,6 +1,7 @@
 import { CancelableStream } from "@/sync/types";
 import { Clock, IClockInterface } from "@/time/clock";
 import { ConnectionState } from "./connection_state";
+import { ExponentialDelay } from "@/time/delay";
 
 type ConnectCallback = () => Promise<void>;
 
@@ -27,22 +28,20 @@ export class OnceConnectStrategy implements IReconnectStrategy {
 }
 
 export class ExponentialReconnectStrategy implements IReconnectStrategy {
-    private readonly maxDelay: number;
-    private readonly maxRetries: number;
-    private readonly backoff: number;
-    private retries: number = 0;
-    private wakeUp: () => void = () => {};
-    private connectedAt: number = -1;
-    public clock: IClockInterface = new Clock();
+    private readonly delay: ExponentialDelay;
 
     public constructor(
         backoffMs: number = 600,
         maxDelayMs: number = -1,
         maxRetries: number = -1,
+        clock: IClockInterface = new Clock(),
     ) {
-        this.maxDelay = maxDelayMs;
-        this.maxRetries = maxRetries;
-        this.backoff = backoffMs;
+        this.delay = new ExponentialDelay(
+            backoffMs,
+            maxDelayMs,
+            maxRetries,
+            clock,
+        );
     }
 
     public async run(
@@ -51,7 +50,7 @@ export class ExponentialReconnectStrategy implements IReconnectStrategy {
     ): Promise<void> {
         for await (const value of state.stream) {
             if (value.cmd === "connected") {
-                this.connectedAt = this.clock.now();
+                this.delay.success();
                 continue;
             }
 
@@ -63,35 +62,18 @@ export class ExponentialReconnectStrategy implements IReconnectStrategy {
                 continue;
             }
 
-            if (this.connectedAt >= 0) {
-                if (this.clock.now() - this.connectedAt > this.backoff) {
-                    this.retries = 0;
-                } else {
-                    this.clock.sleep(this.backoff);
-                }
-            }
-
-            while (this.retries < this.maxRetries || this.maxRetries < 0) {
+            while (await this.delay.retry()) {
                 try {
                     await connect();
                     break;
                 } catch (e) {
-                    this.retries++;
-                    let delay = this.backoff * Math.pow(2, this.retries);
-                    if (this.maxDelay > 0) {
-                        delay = Math.min(this.maxDelay, delay);
-                    }
-                    await new Promise<void>((resolve) => {
-                        this.wakeUp = resolve;
-                        this.clock.sleep(delay).then(resolve);
-                    });
+                    await this.delay.fail();
                 }
             }
         }
     }
 
     public reset(): void {
-        this.retries = 0;
-        this.wakeUp();
+        this.delay.reset();
     }
 }

@@ -13,7 +13,7 @@
  */
 
 /**
- *
+ * The reason for a subscription creation error.
  * @export
  */
 export const CreateSubscriptionErrorReason = {

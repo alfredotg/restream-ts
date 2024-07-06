@@ -16,6 +16,7 @@ services:
             - WS_MQTT_ADDR=0.0.0.0:7081
             - STREAM_URL=rabbitmq://rabbitmq:5672/%2f
             - LOG_FORMAT=full
+            - DEBUG_STREAMS=true
         ports:
             - "127.0.0.1:7081:7081"
 
@@ -30,5 +31,6 @@ services:
             - LOG_LEVEL=debug
             - JWT_PUBLIC_KEY=c2VjcmV0 # secret
             - JWT_SIGNING_ALGORITHM=HS256
+            - DEBUG_STREAMS=true
         ports:
             - "127.0.0.1:7082:7082"
