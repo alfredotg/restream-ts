@@ -146,8 +146,8 @@ export class MqttWsTransport implements ITransport {
                         }
                     });
 
-                    this.client.once("disconnect", () => {
-                        this.logger?.info("disconnected");
+                    this.client.once("close", () => {
+                        this.logger?.info("close");
 
                         this.onDisconnect();
 
@@ -422,7 +422,7 @@ export class MqttWsTransport implements ITransport {
     }
 
     private onDisconnect() {
-        this.client.removeAllListeners();
+        //this.client.removeAllListeners();
 
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();

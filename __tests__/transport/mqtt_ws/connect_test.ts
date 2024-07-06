@@ -19,6 +19,7 @@ import {
     CreateSubscriptionErrorResponse,
 } from "../../../src/transport/commands";
 import { CreateSubscriptionErrorReason } from "../../../src/api";
+import { Logger } from "tslog";
 
 test("connect", async () => {
     const transport = new MqttWsTransport({
@@ -95,6 +96,8 @@ test("auth failed requires new token", async () => {
     });
     let state_stream = transport.state();
     let state = await state_stream.stream.next();
+    expect(state.value.cmd).toBe("disconnected");
+    state = await state_stream.stream.next();
     expect(state.value.cmd).toBe("disconnected");
     state = await state_stream.stream.next();
     expect(state.value.cmd).toBe("connected");

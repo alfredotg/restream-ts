@@ -82,8 +82,8 @@ export class MqttWsTransport {
                         resolve();
                     }
                 });
-                this.client.once("disconnect", () => {
-                    this.logger?.info("disconnected");
+                this.client.once("close", () => {
+                    this.logger?.info("close");
                     this.onDisconnect();
                     if (!resolved) {
                         resolved = true;
@@ -285,7 +285,6 @@ export class MqttWsTransport {
         this.stateBroadcast.set({ cmd: "connected" });
     }
     onDisconnect() {
-        this.client.removeAllListeners();
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();
         for (const sub of subscriptions.values()) {
