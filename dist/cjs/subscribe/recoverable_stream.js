@@ -32,6 +32,10 @@ class RecoverableStream {
             catch (e) {
                 this.logger?.error(e);
             }
+            finally {
+                this.currentStream?.cancel();
+                this.currentStream = null;
+            }
             if (!this.mpcs.isClosed()) {
                 await this.retryDelay.fail();
             }
@@ -72,14 +76,13 @@ class RecoverableStream {
         this.currentStream = res;
         for await (const value of res.stream) {
             if (!(value instanceof __1.SubError)) {
-                if (this.offset === undefined || this.offset >= value.offset) {
+                if (this.offset !== undefined && this.offset >= value.offset) {
                     continue;
                 }
                 this.offset = value.offset;
                 this.mpcs.push(value);
                 continue;
             }
-            this.currentStream = null;
             this.mpcs.push(value);
             res.cancel();
             if (value.error instanceof commands_1.SubErrorResponse) {
@@ -90,8 +93,8 @@ class RecoverableStream {
                     case api_1.SubscriptionErrorReason.Unspecified:
                         break;
                 }
-                return;
             }
+            break;
         }
     }
 }
