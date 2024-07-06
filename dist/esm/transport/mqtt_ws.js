@@ -75,6 +75,7 @@ export class MqttWsTransport {
                     return;
                 }
                 this.client.once("connect", () => {
+                    this.logger?.info("connected");
                     this.onConnect();
                     if (!resolved) {
                         resolved = true;
@@ -82,6 +83,7 @@ export class MqttWsTransport {
                     }
                 });
                 this.client.once("disconnect", () => {
+                    this.logger?.info("disconnected");
                     this.onDisconnect();
                     if (!resolved) {
                         resolved = true;

@@ -213,4 +213,22 @@ describe("Subscriptions", () => {
             api.SubscriptionErrorReason.Lagging,
         );
     });
+
+    test("close transport", async () => {
+        if (transport === null || stream_name === null) {
+            assert.fail("transport or stream_name is null");
+        }
+
+        const subscriber = new Subscriber(transport);
+        const sub = await subscriber.subscribe(stream_name + "/test1");
+
+        assert(!(sub instanceof CreateSubscriptionError));
+
+        const next = sub.stream.next();
+
+        transport.close();
+
+        const error: SubError = (await next).value;
+        assert(error.error instanceof Error);
+    });
 });

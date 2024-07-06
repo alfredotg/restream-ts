@@ -136,6 +136,8 @@ export class MqttWsTransport implements ITransport {
                     }
 
                     this.client.once("connect", () => {
+                        this.logger?.info("connected");
+
                         this.onConnect();
 
                         if (!resolved) {
@@ -145,6 +147,8 @@ export class MqttWsTransport implements ITransport {
                     });
 
                     this.client.once("disconnect", () => {
+                        this.logger?.info("disconnected");
+
                         this.onDisconnect();
 
                         if (!resolved) {
