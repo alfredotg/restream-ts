@@ -11,6 +11,10 @@ import { IDelay } from "@/time/delay";
 
 export class RecoverableStream {
     private readonly mpcs: MPSCStream<IncomingMessage | SubError>;
+    private readonly mpcsError: MPSCStream<
+        SubError | CreateSubscriptionError | Error
+    >;
+
     private currentStream: CancelableStream<IncomingMessage | SubError> | null =
         null;
 
@@ -24,6 +28,9 @@ export class RecoverableStream {
         this.mpcs = new MPSCStream<IncomingMessage | SubError>(() => {
             this.unsubscribe();
         });
+        this.mpcsError = new MPSCStream<
+            SubError | CreateSubscriptionError | Error
+        >();
         this.start();
     }
 
@@ -35,12 +42,21 @@ export class RecoverableStream {
         return this.mpcs;
     }
 
+    public get errorStream(): CancelableStream<
+        SubError | CreateSubscriptionError
+    > {
+        return this.errorStream;
+    }
+
     private async start() {
         while (!this.mpcs.isClosed()) {
             try {
                 await this.process();
             } catch (e) {
                 this.logger?.error(e);
+                if (e instanceof Error) {
+                    this.mpcsError.push(e);
+                }
             } finally {
                 this.currentStream?.cancel();
                 this.currentStream = null;
@@ -87,6 +103,7 @@ export class RecoverableStream {
                 case CreateSubscriptionErrorReason.Unspecified:
                     break;
             }
+            this.mpcsError.push(res);
             this.logger?.error(res.error);
             return;
         }
@@ -95,6 +112,9 @@ export class RecoverableStream {
         this.currentStream = res;
 
         for await (const value of res.stream) {
+            if (this.mpcs.isClosed()) {
+                break;
+            }
             if (!(value instanceof SubError)) {
                 if (this.offset !== undefined && this.offset >= value.offset) {
                     continue;
@@ -103,18 +123,18 @@ export class RecoverableStream {
                 this.mpcs.push(value);
                 continue;
             }
-            this.mpcs.push(value);
-            res.cancel();
 
             if (value.error instanceof SubErrorResponse) {
                 switch (value.error.reason_code) {
                     case SubscriptionErrorReason.Lagging:
+                        this.mpcs.push(value);
                         this.mpcs.cancel();
                         break;
                     case SubscriptionErrorReason.Unspecified:
                         break;
                 }
             }
+            this.mpcsError.push(value);
             break;
         }
     }

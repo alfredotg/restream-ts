@@ -13,6 +13,7 @@ export class RecoverableStream {
         this.mpcs = new MPSCStream(() => {
             this.unsubscribe();
         });
+        this.mpcsError = new MPSCStream();
         this.start();
     }
     unsubscribe() {
@@ -21,6 +22,9 @@ export class RecoverableStream {
     get stream() {
         return this.mpcs;
     }
+    get errorStream() {
+        return this.errorStream;
+    }
     async start() {
         while (!this.mpcs.isClosed()) {
             try {
@@ -28,6 +32,9 @@ export class RecoverableStream {
             }
             catch (e) {
                 this.logger?.error(e);
+                if (e instanceof Error) {
+                    this.mpcsError.push(e);
+                }
             }
             finally {
                 this.currentStream?.cancel();
@@ -66,12 +73,16 @@ export class RecoverableStream {
                 case CreateSubscriptionErrorReason.Unspecified:
                     break;
             }
+            this.mpcsError.push(res);
             this.logger?.error(res.error);
             return;
         }
         this.retryDelay.success();
         this.currentStream = res;
         for await (const value of res.stream) {
+            if (this.mpcs.isClosed()) {
+                break;
+            }
             if (!(value instanceof SubError)) {
                 if (this.offset !== undefined && this.offset >= value.offset) {
                     continue;
@@ -80,17 +91,17 @@ export class RecoverableStream {
                 this.mpcs.push(value);
                 continue;
             }
-            this.mpcs.push(value);
-            res.cancel();
             if (value.error instanceof SubErrorResponse) {
                 switch (value.error.reason_code) {
                     case SubscriptionErrorReason.Lagging:
+                        this.mpcs.push(value);
                         this.mpcs.cancel();
                         break;
                     case SubscriptionErrorReason.Unspecified:
                         break;
                 }
             }
+            this.mpcsError.push(value);
             break;
         }
     }
