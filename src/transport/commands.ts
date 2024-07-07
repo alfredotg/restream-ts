@@ -18,12 +18,19 @@ export type Unsubscribe = {
     sub_id: number;
 };
 
-export type IncomingMessage = {
+export type PublishMessage = {
     cmd: "message";
     topic: string;
     offset: number;
     message: Buffer;
 };
+
+export type OffsetPing = {
+    cmd: "offset_ping";
+    offset: number;
+};
+
+export type IncomingMessage = PublishMessage | OffsetPing;
 
 export class CreateSubscriptionErrorResponse {
     public constructor(

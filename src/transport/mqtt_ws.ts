@@ -422,7 +422,7 @@ export class MqttWsTransport implements ITransport {
     }
 
     private onDisconnect() {
-        //this.client.removeAllListeners();
+        this.client.removeAllListeners();
 
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();
@@ -530,6 +530,16 @@ function parseMessage(
     const offset = offsetProp ? parseInt(offsetProp) : undefined;
     if (offset === undefined || isNaN(offset)) {
         return new Error("Missing offset");
+    }
+
+    if (topic === "") {
+        return [
+            sub_id,
+            {
+                cmd: "offset_ping",
+                offset,
+            },
+        ];
     }
 
     return [

@@ -14,12 +14,17 @@ export type Unsubscribe = {
     cmd: "unsubscribe";
     sub_id: number;
 };
-export type IncomingMessage = {
+export type PublishMessage = {
     cmd: "message";
     topic: string;
     offset: number;
     message: Buffer;
 };
+export type OffsetPing = {
+    cmd: "offset_ping";
+    offset: number;
+};
+export type IncomingMessage = PublishMessage | OffsetPing;
 export declare class CreateSubscriptionErrorResponse {
     reason_code: CreateSubscriptionErrorReason;
     message: string;

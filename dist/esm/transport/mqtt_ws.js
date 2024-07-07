@@ -285,6 +285,7 @@ export class MqttWsTransport {
         this.stateBroadcast.set({ cmd: "connected" });
     }
     onDisconnect() {
+        this.client.removeAllListeners();
         const subscriptions = this.subscriptions;
         this.subscriptions = new Map();
         for (const sub of subscriptions.values()) {
@@ -366,6 +367,15 @@ function parseMessage(topic, message, packet) {
     const offset = offsetProp ? parseInt(offsetProp) : undefined;
     if (offset === undefined || isNaN(offset)) {
         return new Error("Missing offset");
+    }
+    if (topic === "") {
+        return [
+            sub_id,
+            {
+                cmd: 'offset_ping',
+                offset,
+            }
+        ];
     }
     return [
         sub_id,

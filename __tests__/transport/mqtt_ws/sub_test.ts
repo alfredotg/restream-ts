@@ -14,6 +14,8 @@ import { create_stream, get_server_url } from "./common";
 import {
     CreateSubscriptionError,
     CreateSubscriptionErrorResponse,
+    OffsetPing,
+    PublishMessage,
 } from "../../../src/transport/commands";
 
 test("connect", async () => {
@@ -89,7 +91,7 @@ describe("Subscriptions", () => {
         );
         expect(pubRes).toBe(undefined);
 
-        const value: IncomingMessage = (await sub.stream.next()).value;
+        const value: PublishMessage = (await sub.stream.next()).value;
         expect(value.cmd).toBe("message");
         expect(value.topic).toBe(stream_name + "/test1");
         expect(value.message.toString()).toBe("message 1");
@@ -128,12 +130,12 @@ describe("Subscriptions", () => {
         });
         assert(!(sub instanceof CreateSubscriptionError));
 
-        const first: IncomingMessage = (await sub.stream.next()).value;
+        const first: PublishMessage = (await sub.stream.next()).value;
         expect(first.cmd).toBe("message");
         expect(first.topic).toBe(stream_name + "/test1");
         expect(first.message.toString()).toBe("message 1");
 
-        const second: IncomingMessage = (await sub.stream.next()).value;
+        const second: PublishMessage = (await sub.stream.next()).value;
         expect(second.cmd).toBe("message");
         expect(second.message.toString()).toBe("message 2");
     });
@@ -173,11 +175,9 @@ describe("Subscriptions", () => {
         assert(!(sub instanceof CreateSubscriptionError));
         expect(transport.subCount()).toBe(1);
 
-        const value: IncomingMessage = (await sub.stream.next()).value;
+        const value: OffsetPing = (await sub.stream.next()).value;
 
-        expect(value.cmd).toBe("message");
-        expect(value.topic).toBe("");
-        expect(value.message.toString()).toBe("");
+        expect(value.cmd).toBe("offset_ping");
         expect(value.offset).toBe(0);
     });
 
