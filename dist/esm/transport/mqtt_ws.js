@@ -372,9 +372,9 @@ function parseMessage(topic, message, packet) {
         return [
             sub_id,
             {
-                cmd: 'offset_ping',
+                cmd: "offset_ping",
                 offset,
-            }
+            },
         ];
     }
     return [

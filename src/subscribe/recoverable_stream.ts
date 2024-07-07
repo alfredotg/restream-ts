@@ -9,11 +9,11 @@ import {
 } from "@/transport/commands";
 import { IDelay } from "@/time/delay";
 
+type ErrorStreamItem = SubError | CreateSubscriptionError | Error;
+
 export class RecoverableStream {
     private readonly mpcs: MPSCStream<IncomingMessage | SubError>;
-    private readonly mpcsError: MPSCStream<
-        SubError | CreateSubscriptionError | Error
-    >;
+    private readonly mpcsError: MPSCStream<ErrorStreamItem>;
 
     private currentStream: CancelableStream<IncomingMessage | SubError> | null =
         null;
@@ -42,9 +42,7 @@ export class RecoverableStream {
         return this.mpcs;
     }
 
-    public get errorStream(): CancelableStream<
-        SubError | CreateSubscriptionError
-    > {
+    public get errorStream(): CancelableStream<ErrorStreamItem> {
         return this.errorStream;
     }
 
