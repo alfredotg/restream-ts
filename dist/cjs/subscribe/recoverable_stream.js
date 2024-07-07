@@ -26,7 +26,7 @@ class RecoverableStream {
         return this.mpcs;
     }
     get errorStream() {
-        return this.errorStream;
+        return this.mpcsError;
     }
     async start() {
         while (!this.mpcs.isClosed()) {

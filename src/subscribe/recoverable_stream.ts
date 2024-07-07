@@ -43,7 +43,7 @@ export class RecoverableStream {
     }
 
     public get errorStream(): CancelableStream<ErrorStreamItem> {
-        return this.errorStream;
+        return this.mpcsError;
     }
 
     private async start() {
